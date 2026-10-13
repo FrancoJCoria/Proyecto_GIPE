@@ -8,8 +8,8 @@ public class Usuario
     [Key]
     public int Id {get; set;}
 
-    [Required]
-    [MaxLength(20), MinLength(6)]
+    [Required(ErrorMessage = "El nombre del usuario es obligatorio.")]
+    [MaxLength(20, ErrorMessage = "El nombre supera los 20 caracteres."), MinLength(6, ErrorMessage = "El nombre debe contener 6 o mas caracteres.")]
     public string Nombre {get; set;} = string.Empty;
 
     [Required]

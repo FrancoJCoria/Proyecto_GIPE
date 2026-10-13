@@ -2,6 +2,7 @@ using MySqlConnector;
 using System.Data;
 using Proyecto_GIPE.Models.IRepositorios;
 using Proyecto_GIPE.Models.Repositorios;
+using Proyecto_GIPE.Models.Servicios;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,7 @@ builder.Services.AddScoped<IRepositorioUsuario, RepositorioUsuario>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<ServicioPassword>();
 
 var app = builder.Build();
 

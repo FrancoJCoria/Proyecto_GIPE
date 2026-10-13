@@ -4,9 +4,9 @@ namespace Proyecto_GIPE.Models.IRepositorios;
 
 public interface IRepositorioUsuario
 {
-    Task<IEnumerable<Usuario>> ObtenerTodos();
-    Task<Usuario?> ObtenerPorEmail(string email);
-    Task<int> CrearUsuario (Usuario usuario);
-    Task<bool> ActualizarUsuario (Usuario usuario);
-    Task<bool> CambiarEstadoUsuario (int id, bool nuevoEstado);
+    IList<Usuario> ObtenerTodos();
+    Usuario? ObtenerPorEmail(string email);
+    int CrearUsuario(Usuario usuario);
+    bool ActualizarUsuario(Usuario usuario);
+    bool CambiarEstadoUsuario(int id, bool nuevoEstado);
 }
