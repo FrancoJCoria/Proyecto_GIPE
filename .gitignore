@@ -1,0 +1,225 @@
+# ============================================
+# .NET / VISUAL STUDIO / RIDER
+# ============================================
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+build/
+bld/
+[Oo]ut/
+[Ll]ib/
+[Ll]ib64/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.svclog
+*.sbr
+*.cache
+*.tlog
+*.lastbuildstate
+*.idb
+*.pdb
+*.ilk
+*.meta
+*.obj
+*.iobj
+*.ipdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*.log
+*.vspscc
+*.vssscc
+.builds
+*_i.c
+*_p.c
+*_h.h
+*.ncb
+*.sdf
+*.opensdf
+*.sln.cache
+*.VC.db
+*.VC.VC.opendb
+
+# Rider / ReSharper
+.idea/
+*.DotSettings.user
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings
+.vscode/
+
+# ============================================
+# BUILD RESULTS
+# ============================================
+[Dd]ebugPublic/
+[Rr]eleasePublic/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+
+# ============================================
+# VISUAL STUDIO / VS CODE
+# ============================================
+.vs/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# ============================================
+# NUGET
+# ============================================
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+!**/[Pp]ackages/repositories.config
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.fragment.lock.json
+artifacts/
+.nuget/
+
+# ============================================
+# ENTITY FRAMEWORK / MIGRACIONES
+# ============================================
+# Descomentar solo si NO querés versionar migraciones (poco recomendado)
+# **/Migrations/*.cs
+
+# ============================================
+# APPSPECÍFICO / CONFIG LOCAL
+# ============================================
+*.appconfig
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.Local.json
+secrets.json
+*.pfx
+*.p12
+*.key
+*.pem
+*.crt
+
+# ============================================
+# NODE (por si usás Bootstrap o Vue con npm)
+# ============================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+.npm/
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ============================================
+# FRONTEND BUILD (Vue, Vite, Webpack, etc.)
+# ============================================
+dist/
+build/
+out/
+.vite/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+wwwroot/dist/
+wwwroot/build/
+wwwroot/js/*.min.js
+wwwroot/css/*.min.css
+wwwroot/js/*.js.map
+wwwroot/css/*.css.map
+# Si usás LibMan (Bootstrap vía libman.json), ignorar librerías descargadas:
+wwwroot/lib/
+
+# ============================================
+# TESTING / COBERTURA
+# ============================================
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.VisualState.xml
+TestResult.xml
+nunit-*.xml
+coverage/
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+coverage*.info
+.opencover.xml
+.dotnet/
+*.trx
+
+# ============================================
+# BASE DE DATOS / DUMPS
+# ============================================
+*.mdf
+*.ldf
+*.ndf
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+
+# ============================================
+# SISTEMAS OPERATIVOS
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+*.lnk
+
+# ============================================
+# OTROS
+# ============================================
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
+*~
+.fleet/
+*.sln.docstates
+*.user
+*.rsuser
