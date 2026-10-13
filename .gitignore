@@ -223,3 +223,10 @@ desktop.ini
 *.sln.docstates
 *.user
 *.rsuser
+obj/Debug/net10.0/Proyecto_GIPE.assets.cache
+/obj
+/obj/Debug/net10.0
+obj/Debug/net10.0/Proyecto_GIPE.AssemblyInfo.cs
+obj/Debug/net10.0/Proyecto_GIPE.AssemblyInfoInputs.cache
+obj/Debug/net10.0/Proyecto_GIPE.assets.cache
+obj/Debug/net10.0/Proyecto_GIPE.GeneratedMSBuildEditorConfig.editorconfig
