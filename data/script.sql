@@ -3,7 +3,8 @@ CREATE TABLE `usuario` (
   `nombre` varchar(150) NOT NULL,
   `email` varchar(150) UNIQUE NOT NULL,
   `password_hash` varchar(255) NOT NULL,
-  `rol` ENUM ('dueno', 'empleado') NOT NULL DEFAULT 'dueno',
+  `url_avatar` varchar (500) NULL DEFAULT NULL,
+  `rol` ENUM ('dueno', 'empleado') NOT NULL DEFAULT 'empleado',
   `estado` boolean DEFAULT true
 );
 
@@ -21,6 +22,7 @@ CREATE TABLE `producto` (
   `margen_objetivo` decimal(5,2) NOT NULL COMMENT 'Porcentaje de ganancia deseado',
   `precio_actual` decimal(12,2) NOT NULL,
   `stock_actual` decimal(12,2) DEFAULT 0,
+  `url_producto` varchar (500) NULL DEFAULT NULL,
   `estado` boolean DEFAULT true
 );
 
