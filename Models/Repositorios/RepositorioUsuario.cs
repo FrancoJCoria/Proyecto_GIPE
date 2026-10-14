@@ -14,10 +14,14 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
     {
     }
 
+//------------------------------------------------------------OBTENER TODOS LOS USUARIOS LIST --------------------------------------------------------
     public IList<Usuario> ObtenerTodos()
     {
-        var lista = new List<Usuario>();
+    
+    var lista = new List<Usuario>();
 
+    try
+    {
         using var conexion = new MySqlConnection(connectionString);
 
         string consultaSql = @"SELECT id, nombre, email, password_hash, rol, estado
@@ -35,8 +39,16 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
 
         return lista;
     }
-
+    catch (Exception e)
+    {
+        Console.WriteLine($"Error al obtener los usuarios: {e.Message}");
+        return lista;
+    }
+    }
+    //------------------------------------------------------------OBTENER USUARIO POR EMAIL --------------------------------------------------------
     public Usuario? ObtenerPorEmail(string email)
+    {
+    try
     {
         using var conexion = new MySqlConnection(connectionString);
 
@@ -60,9 +72,18 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
 
         return null;
     }
+    catch (Exception e)
+    {
+        Console.WriteLine($"Error al obtener el usuario por email: {e.Message}");
+        return null;
+    }
+    }
 
+
+    //------------------------------------------------------------CREAR USUARIO --------------------------------------------------------
     public int CrearUsuario(Usuario usuario)
     {
+        try{
         using var conexion = new MySqlConnection(connectionString);
 
         string consultaSql = @"INSERT INTO usuario(nombre, email, password_hash, rol, estado)
@@ -80,12 +101,19 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
         conexion.Open();
 
         return Convert.ToInt32(comando.ExecuteScalar());
+        }catch(Exception e){
+            Console.WriteLine($"Error al crear el usuario: {e.Message}");
+            return 0;
+        }
     }
+
+
+    //------------------------------------------------------------ ACTUALIZAR ESTADO DE USUARIO --------------------------------------------------------
 
     public bool ActualizarUsuario(Usuario usuario)
     {
         using var conexion = new MySqlConnection(connectionString);
-
+        try{
         string consultaSql = @"UPDATE usuario
         SET nombre = @Nombre, email = @Email, password_hash = @PasswordHash,rol = @Rol,estado = @Estado
         WHERE id = @Id;";
@@ -101,14 +129,18 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
         conexion.Open();
 
         return comando.ExecuteNonQuery() > 0;
+        }catch(Exception e){
+            Console.WriteLine($"Error al actualizar el usuario: {e.Message}");
+            return false;
+        }
     }
 
     public bool CambiarEstadoUsuario(int id, bool nuevoEstado)
     {
+        try{
         using var conexion = new MySqlConnection(connectionString);
-
         string consultaSql = @"UPDATE usuario
-        SET estado = @Estado 
+        SET estado = @Estado
         WHERE id = @Id;";
 
         using var comando = new MySqlCommand(consultaSql, conexion);
@@ -119,8 +151,14 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
         conexion.Open();
 
         return comando.ExecuteNonQuery() > 0;
+        }catch(Exception e)
+        {
+            Console.WriteLine($"Error al cambiar el estado de usuario: {e.Message}");
+            return false;
+        }
     }
 
+//--------------------------------------------------------------------FUNCIONES --------------------------------------------------------
     private static Usuario LeerUsuario(MySqlDataReader lector)
     {
         return new Usuario
