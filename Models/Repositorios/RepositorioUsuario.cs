@@ -1,3 +1,4 @@
+using System.ComponentModel.Design;
 using System.Data;
 using Microsoft.Extensions.Configuration;
 using MySqlConnector;
@@ -24,7 +25,7 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
     {
         using var conexion = new MySqlConnection(connectionString);
 
-        string consultaSql = @"SELECT id, nombre, email, password_hash, rol, estado
+        string consultaSql = @"SELECT id, nombre, email, password_hash, rol, estado, url_avatar
         FROM usuario;";
 
         using var comando = new MySqlCommand(consultaSql, conexion);
@@ -52,7 +53,7 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
     {
         using var conexion = new MySqlConnection(connectionString);
 
-        string consultaSql = @"SELECT id, nombre, email, password_hash, rol, estado
+        string consultaSql = @"SELECT id, nombre, email, password_hash, rol, estado, url_avatar
         FROM usuario
         WHERE email = @Email
         LIMIT 1;";
@@ -79,15 +80,40 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
     }
     }
 
+    public Usuario? ObtenerPorId(int id)
+    {
+        try
+        {
+            var conexion = new MySqlConnection(connectionString);
+            var consulta = @"SELECT * FROM usuario WHERE id = @id
+            LIMIT 1;";
 
+            using var comando = new MySqlCommand(consulta, conexion);
+            comando.Parameters.Add("@id", MySqlDbType.Int32).Value = id;
+            conexion.Open();
+
+            using var lector = comando.ExecuteReader();
+
+            if (lector.Read())
+            {
+                return LeerUsuario(lector);
+            }
+
+            return null;
+        }catch(Exception e)
+        {
+            Console.WriteLine($"Error al obtener el usario por ID {e.Message}");
+            return null;
+        }
+    }
     //------------------------------------------------------------CREAR USUARIO --------------------------------------------------------
     public int CrearUsuario(Usuario usuario)
     {
         try{
         using var conexion = new MySqlConnection(connectionString);
 
-        string consultaSql = @"INSERT INTO usuario(nombre, email, password_hash, rol, estado)
-        VALUES (@Nombre, @Email, @PasswordHash, @Rol, @Estado);
+        string consultaSql = @"INSERT INTO usuario(nombre, email, password_hash, rol, estado, url_avatar)
+        VALUES (@Nombre, @Email, @PasswordHash, @Rol, @Estado, @Url_avatar);
         SELECT LAST_INSERT_ID();";
 
         using var comando = new MySqlCommand(consultaSql, conexion);
@@ -97,6 +123,7 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
         comando.Parameters.Add("@PasswordHash", MySqlDbType.VarChar, 255).Value = usuario.PasswordHash;
         comando.Parameters.Add("@Rol", MySqlDbType.Int32).Value = (int)usuario.Rol;
         comando.Parameters.Add("@Estado", MySqlDbType.Bit).Value = usuario.Estado;
+        comando.Parameters.Add("@Url_avatar", MySqlDbType.VarChar, 500).Value = usuario.Url_avatar;
 
         conexion.Open();
 
@@ -108,7 +135,7 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
     }
 
 
-    //------------------------------------------------------------ ACTUALIZAR ESTADO DE USUARIO --------------------------------------------------------
+    //------------------------------------------------------------ ACTUALIZAR EL USUARIO --------------------------------------------------------
 
     public bool ActualizarUsuario(Usuario usuario)
     {
@@ -135,6 +162,9 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
         }
     }
 
+
+    //------------------------------------------------------------ ACTUALIZAR ESTADO DE USUARIO --------------------------------------------------------
+
     public bool CambiarEstadoUsuario(int id, bool nuevoEstado)
     {
         try{
@@ -158,6 +188,40 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
         }
     }
 
+
+        //------------------------------------------------------------ ACTUALIZAR EL AVATAR DE USUARIO --------------------------------------------------------
+
+    public string? EditarAvatarUsuario(int id, string url)
+    {
+        try
+        {
+            using var conexion = new MySqlConnection(connectionString);
+
+            string consulta = @"UPDATE usuario
+            SET url_avatar = @url_avatar
+            WHERE estado = 1 
+            AND id = @Id;";
+
+            using var comando = new MySqlCommand(consulta, conexion);
+            comando.Parameters.Add("@url_avatar", MySqlDbType.VarChar,500).Value = url;
+            comando.Parameters.Add("@Id", MySqlDbType.Int32).Value = id;
+            conexion.Open();
+
+            int filasAfectadas = comando.ExecuteNonQuery();
+
+            if (filasAfectadas > 0)
+            {
+                return url;
+            }
+
+            return null;
+
+        }catch(Exception e)
+        {
+            Console.WriteLine($"Error al modificar el avatar de usuario {e.Message}");
+            return null;
+        }
+    }
 //--------------------------------------------------------------------FUNCIONES --------------------------------------------------------
     private static Usuario LeerUsuario(MySqlDataReader lector)
     {
@@ -168,7 +232,8 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
             Email = lector.GetString("email"),
             PasswordHash = lector.GetString("password_hash"),
             Rol = (RolUsuario)lector.GetInt32("rol"),
-            Estado = lector.GetBoolean("estado")
+            Estado = lector.GetBoolean("estado"),
+            Url_avatar = lector.GetString("url_avatar")
         };
     }
 }

@@ -24,6 +24,8 @@ public class Usuario
     [Required]
     public RolUsuario Rol { get; set; } = RolUsuario.Empleado;
 
+    public string? Url_avatar {get; set;} = string.Empty;
+
     [Required]
     public bool Estado { get; set; } = true;
 }

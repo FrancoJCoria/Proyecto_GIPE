@@ -12,10 +12,11 @@ builder.Services.AddScoped<IDbConnection>((sp) =>
     new MySqlConnection(connectionString));
 
 builder.Services.AddScoped<IRepositorioUsuario, RepositorioUsuario>();
+builder.Services.AddScoped<ServicioPassword>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddScoped<ServicioPassword>();
+
 
 var app = builder.Build();
 
