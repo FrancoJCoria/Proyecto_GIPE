@@ -84,12 +84,14 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
     {
         try
         {
-            var conexion = new MySqlConnection(connectionString);
-            var consulta = @"SELECT * FROM usuario WHERE id = @id
+            using var conexion = new MySqlConnection(connectionString);
+            var consulta = @"SELECT id, nombre, email, password_hash, rol, estado, url_avatar
+            FROM usuario 
+            WHERE id = @Id
             LIMIT 1;";
 
             using var comando = new MySqlCommand(consulta, conexion);
-            comando.Parameters.Add("@id", MySqlDbType.Int32).Value = id;
+            comando.Parameters.Add("@Id", MySqlDbType.Int32).Value = id;
             conexion.Open();
 
             using var lector = comando.ExecuteReader();
@@ -142,7 +144,7 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
         using var conexion = new MySqlConnection(connectionString);
         try{
         string consultaSql = @"UPDATE usuario
-        SET nombre = @Nombre, email = @Email, password_hash = @PasswordHash,rol = @Rol,estado = @Estado
+        SET nombre = @Nombre, email = @Email, url_avatar = @url_avatar, rol = @Rol,estado = @Estado
         WHERE id = @Id;";
 
         using var comando = new MySqlCommand(consultaSql, conexion);
@@ -150,7 +152,8 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
         comando.Parameters.Add("@Id", MySqlDbType.Int32).Value = usuario.Id;
         comando.Parameters.Add("@Nombre", MySqlDbType.VarChar, 20).Value = usuario.Nombre;
         comando.Parameters.Add("@Email", MySqlDbType.VarChar, 150).Value = usuario.Email;
-        comando.Parameters.Add("@PasswordHash", MySqlDbType.VarChar, 255).Value = usuario.PasswordHash;
+        comando.Parameters.Add("@Url_avatar", MySqlDbType.VarChar, 500).Value =
+        (object?)usuario.Url_avatar ?? DBNull.Value;       
         comando.Parameters.Add("@Rol", MySqlDbType.Int32).Value = (int)usuario.Rol;
         comando.Parameters.Add("@Estado", MySqlDbType.Bit).Value = usuario.Estado;
         conexion.Open();
@@ -225,15 +228,19 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
 //--------------------------------------------------------------------FUNCIONES --------------------------------------------------------
     private static Usuario LeerUsuario(MySqlDataReader lector)
     {
+        int indiceAvatar = lector.GetOrdinal("url_avatar");
+
         return new Usuario
         {
             Id = lector.GetInt32("id"),
             Nombre = lector.GetString("nombre"),
             Email = lector.GetString("email"),
             PasswordHash = lector.GetString("password_hash"),
-            Rol = (RolUsuario)lector.GetInt32("rol"),
+            Rol = Enum.Parse<RolUsuario>(lector.GetString("rol"), true),
             Estado = lector.GetBoolean("estado"),
-            Url_avatar = lector.GetString("url_avatar")
+            Url_avatar = lector.IsDBNull(indiceAvatar)
+            ? null
+            : lector.GetString(indiceAvatar)
         };
     }
 }
