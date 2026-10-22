@@ -1,35 +1,94 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using MySqlConnector;
-using System.Data;
 using Proyecto_GIPE.Models.IRepositorios;
 using Proyecto_GIPE.Models.Repositorios;
 using Proyecto_GIPE.Models.Servicios;
 
+DotNetEnv.Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = new MySqlConnectionStringBuilder
+{
+    Server = GetEnv("DB_HOST", "localhost"),
+    Port = uint.Parse(GetEnv("DB_PORT", "3306")),
+    Database = GetEnv("DB_NAME", "bdgipe"),
+    UserID = GetEnv("DB_USER", "root"),
+    Password = GetEnv("DB_PASSWORD"),
+    CharacterSet = "utf8mb4"
+}.ConnectionString;
 
-builder.Services.AddScoped<IDbConnection>((sp) => 
-    new MySqlConnection(connectionString));
+builder.Configuration["ConnectionStrings:DefaultConnection"] = connectionString;
+
+var jwtSecret = GetEnv("JWT_SECRET");
+var jwtIssuer = GetEnv("JWT_ISSUER", "GIPE");
+var jwtAudience = GetEnv("JWT_AUDIENCE", "GIPE");
+
+builder.Configuration["TokenAuthentication:SecretKey"] = jwtSecret;
+builder.Configuration["TokenAuthentication:Issuer"] = jwtIssuer;
+builder.Configuration["TokenAuthentication:Audience"] = jwtAudience;
 
 builder.Services.AddScoped<IRepositorioUsuario, RepositorioUsuario>();
 builder.Services.AddScoped<ServicioPassword>();
 
-// Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services
+    .AddAuthentication(options =>
+    {
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    })
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Usuarios/Login";
+        options.LogoutPath = "/Usuarios/Logout";
+        options.AccessDeniedPath = "/Home/AccesoDenegado";
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+            ClockSkew = TimeSpan.FromMinutes(1)
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Dueno", policy => policy.RequireRole("Dueno"));
+    options.AddPolicy("Empleado", policy => policy.RequireRole("Empleado"));
+});
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ApiCors", policy =>
+        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
 app.UseRouting();
-
+app.UseCors("ApiCors");
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
@@ -39,5 +98,22 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
-
 app.Run();
+
+static string GetEnv(string name, string? fallback = null)
+{
+    var value = Environment.GetEnvironmentVariable(name);
+
+    if (!string.IsNullOrWhiteSpace(value))
+    {
+        return value;
+    }
+
+    if (fallback is not null)
+    {
+        return fallback;
+    }
+
+    throw new InvalidOperationException(
+        $"Falta la variable de entorno {name}. Revisá el archivo .env.");
+}

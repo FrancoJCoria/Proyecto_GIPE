@@ -1,30 +1,27 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.Net.Http.Headers;
-using Proyecto_GIPE.Models;
 
-public class Producto()
+namespace Proyecto_GIPE.Models.Entities;
+
+public class Producto
 {
     [Key]
-    public int Id {get; set;}
-
-
-    [Required]
-    public string Nombre {get; set;} = string.Empty;
+    public int Id { get; set; }
 
     [Required]
-    public decimal CostoExtra {get; set;} 
+    public string Nombre { get; set; } = string.Empty;
+
+    public decimal CostoExtra { get; set; }
 
     [Required]
-    public int MargenObjetivo{get; set;}
+    public decimal MargenObjetivo { get; set; }
 
     [Required]
-    public decimal PrecioActual{get; set;}
+    public decimal PrecioActual { get; set; }
 
     [Required]
-    public int StockActual {get; set;}
+    public decimal StockActual { get; set; }
 
-    
-    public string UrlProducto {get; set;}
+    public string? UrlProducto { get; set; }
 
-    public bool Estado {get; set;}
+    public bool Estado { get; set; } = true;
 }
