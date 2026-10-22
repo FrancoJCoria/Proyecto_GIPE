@@ -1,86 +1,97 @@
-CREATE TABLE `usuario` (
-  `id` int PRIMARY KEY AUTO_INCREMENT,
-  `nombre` varchar(150) NOT NULL,
-  `email` varchar(150) UNIQUE NOT NULL,
-  `password_hash` varchar(255) NOT NULL,
-  `url_avatar` varchar (500) NULL DEFAULT NULL,
-  `rol` ENUM ('dueno', 'empleado') NOT NULL DEFAULT 'empleado',
-  `estado` boolean DEFAULT true
-);
+-- GIPE - Esquema de base de datos (MySQL 8+/9+)
+-- Ejecutar con: mysql -u root -p < data/script.sql
+-- Es idempotente: no borra datos existentes.
+-- Para recrear todo desde cero usar data/reset.sql y volver a ejecutar este script.
 
-CREATE TABLE `insumo` (
-  `id` int PRIMARY KEY AUTO_INCREMENT,
-  `nombre` varchar(150) NOT NULL,
-  `unidad` varchar(20) COMMENT 'kg, litro, unidad, etc.',
-  `costo_unitario` decimal(12,4) NOT NULL
-);
+CREATE DATABASE IF NOT EXISTS bdgipe
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
 
-CREATE TABLE `producto` (
-  `id` int PRIMARY KEY AUTO_INCREMENT,
-  `nombre` varchar(150) NOT NULL,
-  `costo_extra` decimal(12,2) DEFAULT 0 COMMENT 'Mano de obra, packaging, envio, etc.',
-  `margen_objetivo` decimal(5,2) NOT NULL COMMENT 'Porcentaje de ganancia deseado',
-  `precio_actual` decimal(12,2) NOT NULL,
-  `stock_actual` decimal(12,2) DEFAULT 0,
-  `url_producto` varchar (500) NULL DEFAULT NULL,
-  `estado` boolean DEFAULT true
-);
+USE bdgipe;
 
-CREATE TABLE `producto_insumo` (
-  `id` int PRIMARY KEY AUTO_INCREMENT,
-  `producto_id` int NOT NULL,
-  `insumo_id` int NOT NULL,
-  `cantidad` decimal(12,4) NOT NULL COMMENT 'Insumo por unidad de producto'
-);
+CREATE TABLE IF NOT EXISTS usuario (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  nombre VARCHAR(150) NOT NULL,
+  email VARCHAR(150) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  url_avatar VARCHAR(500) NULL DEFAULT NULL,
+  rol ENUM('Dueno', 'Empleado') NOT NULL DEFAULT 'Empleado',
+  estado BOOLEAN NOT NULL DEFAULT TRUE,
+  UNIQUE KEY uq_usuario_email (email)
+) ENGINE=InnoDB;
 
-CREATE TABLE `cliente` (
-  `id` int PRIMARY KEY AUTO_INCREMENT,
-  `nombre` varchar(150) NOT NULL,
-  `telefono` varchar(30),
-  `email` varchar(150)
-);
+CREATE TABLE IF NOT EXISTS insumo (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  nombre VARCHAR(150) NOT NULL,
+  unidad ENUM('Unidad', 'Kilogramo', 'Litro', 'Metro', 'Otro') NOT NULL DEFAULT 'Unidad',
+  costo_unitario DECIMAL(12,4) NOT NULL DEFAULT 0,
+  estado BOOLEAN NOT NULL DEFAULT TRUE
+) ENGINE=InnoDB;
 
-CREATE TABLE `venta` (
-  `id` int PRIMARY KEY AUTO_INCREMENT,
-  `cliente_id` int NOT NULL COMMENT 'Opcional: venta de mostrador',
-  `usuario_id` int NOT NULL COMMENT 'Quien registro la venta',
-  `fecha` timestamp DEFAULT (now()),
-  `total` decimal(12,2) NOT NULL,
-  `estado` boolean DEFAULT true
-);
+CREATE TABLE IF NOT EXISTS producto (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  nombre VARCHAR(150) NOT NULL,
+  descripcion VARCHAR(500) NULL DEFAULT NULL,
+  costo_extra DECIMAL(12,2) NOT NULL DEFAULT 0,
+  margen_objetivo DECIMAL(5,2) NOT NULL DEFAULT 0,
+  precio_actual DECIMAL(12,2) NOT NULL DEFAULT 0,
+  stock_actual DECIMAL(12,2) NOT NULL DEFAULT 0,
+  url_producto VARCHAR(500) NULL DEFAULT NULL,
+  estado BOOLEAN NOT NULL DEFAULT TRUE
+) ENGINE=InnoDB;
 
-CREATE TABLE `venta_item` (
-  `id` int PRIMARY KEY AUTO_INCREMENT,
-  `venta_id` int NOT NULL,
-  `producto_id` int NOT NULL,
-  `cantidad` decimal(12,2) NOT NULL,
-  `precio_momento` decimal(12,2) NOT NULL COMMENT 'Precio al momento de la venta',
-  `costo_momento` decimal(12,2) NOT NULL COMMENT 'Costo al momento de la venta'
-);
+CREATE TABLE IF NOT EXISTS producto_insumo (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  producto_id INT NOT NULL,
+  insumo_id INT NOT NULL,
+  cantidad DECIMAL(12,4) NOT NULL,
+  UNIQUE KEY uq_producto_insumo (producto_id, insumo_id),
+  CONSTRAINT fk_producto_insumo_producto FOREIGN KEY (producto_id) REFERENCES producto (id),
+  CONSTRAINT fk_producto_insumo_insumo FOREIGN KEY (insumo_id) REFERENCES insumo (id)
+) ENGINE=InnoDB;
 
-CREATE TABLE `gasto` (
-  `id` int PRIMARY KEY AUTO_INCREMENT,
-  `usuario_id` int NOT NULL COMMENT 'Quien registro el gasto',
-  `descripcion` varchar(200) NOT NULL,
-  `categoria` varchar(100) COMMENT 'Texto libre: alquiler, luz, publicidad',
-  `monto` decimal(12,2) NOT NULL,
-  `fecha` date NOT NULL
-);
+CREATE TABLE IF NOT EXISTS cliente (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  nombre VARCHAR(150) NOT NULL,
+  apellido VARCHAR(150) NULL DEFAULT NULL,
+  telefono VARCHAR(30) NULL DEFAULT NULL,
+  email VARCHAR(150) NULL DEFAULT NULL,
+  direccion VARCHAR(200) NULL DEFAULT NULL,
+  estado BOOLEAN NOT NULL DEFAULT TRUE
+) ENGINE=InnoDB;
 
-CREATE UNIQUE INDEX `producto_insumo_index_0` ON `producto_insumo` (`producto_id`, `insumo_id`);
+CREATE TABLE IF NOT EXISTS venta (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  cliente_id INT NULL DEFAULT NULL,
+  usuario_id INT NOT NULL,
+  fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  monto_total DECIMAL(12,2) NOT NULL DEFAULT 0,
+  estado BOOLEAN NOT NULL DEFAULT TRUE,
+  KEY idx_venta_fecha (fecha),
+  KEY idx_venta_usuario (usuario_id),
+  CONSTRAINT fk_venta_cliente FOREIGN KEY (cliente_id) REFERENCES cliente (id),
+  CONSTRAINT fk_venta_usuario FOREIGN KEY (usuario_id) REFERENCES usuario (id)
+) ENGINE=InnoDB;
 
-ALTER TABLE `producto_insumo` ADD FOREIGN KEY (`producto_id`) REFERENCES `producto` (`id`);
+CREATE TABLE IF NOT EXISTS venta_item (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  venta_id INT NOT NULL,
+  producto_id INT NOT NULL,
+  cantidad DECIMAL(12,2) NOT NULL,
+  precio_momento DECIMAL(12,2) NOT NULL,
+  costo_momento DECIMAL(12,2) NOT NULL,
+  KEY idx_venta_item_venta (venta_id),
+  CONSTRAINT fk_venta_item_venta FOREIGN KEY (venta_id) REFERENCES venta (id) ON DELETE CASCADE,
+  CONSTRAINT fk_venta_item_producto FOREIGN KEY (producto_id) REFERENCES producto (id)
+) ENGINE=InnoDB;
 
-ALTER TABLE `producto_insumo` ADD FOREIGN KEY (`insumo_id`) REFERENCES `insumo` (`id`);
-
-ALTER TABLE `venta` ADD FOREIGN KEY (`cliente_id`) REFERENCES `cliente` (`id`);
-
-ALTER TABLE `venta` ADD FOREIGN KEY (`usuario_id`) REFERENCES `usuario` (`id`);
-
-ALTER TABLE `venta_item` ADD FOREIGN KEY (`venta_id`) REFERENCES `venta` (`id`);
-
-ALTER TABLE `venta_item` ADD FOREIGN KEY (`producto_id`) REFERENCES `producto` (`id`);
-
-ALTER TABLE `gasto` ADD FOREIGN KEY (`usuario_id`) REFERENCES `usuario` (`id`);
-
-ALTER TABLE `venta` ADD FOREIGN KEY (`total`) REFERENCES `venta` (`id`);
+CREATE TABLE IF NOT EXISTS gasto (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  usuario_id INT NOT NULL,
+  descripcion VARCHAR(200) NOT NULL,
+  categoria ENUM('Alquiler', 'Servicios', 'Publicidad', 'Transporte', 'Otro') NOT NULL DEFAULT 'Otro',
+  monto DECIMAL(12,2) NOT NULL DEFAULT 0,
+  fecha DATE NOT NULL,
+  KEY idx_gasto_fecha (fecha),
+  CONSTRAINT fk_gasto_usuario FOREIGN KEY (usuario_id) REFERENCES usuario (id)
+) ENGINE=InnoDB;

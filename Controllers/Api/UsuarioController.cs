@@ -1,8 +1,8 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Proyecto_GIPE.Models.DTOs.Usuarios;
 using Proyecto_GIPE.Models.Entities;
 using Proyecto_GIPE.Models.IRepositorios;
-using Proyecto_GIPE.Models.Servicios;
 using Proyecto_GIPE.Models.Enums;
 
 namespace Proyecto_GIPE.Controllers.Api;
@@ -12,14 +12,14 @@ namespace Proyecto_GIPE.Controllers.Api;
 public class UsuarioController : ControllerBase
 {
     private readonly IRepositorioUsuario _repositorioUsuario;
-    private readonly ServicioPassword _servicioPassword;
+    private readonly IPasswordHasher<Usuario> _passwordHasher;
 
     public UsuarioController(
         IRepositorioUsuario repositorioUsuario,
-        ServicioPassword servicioPassword)
+        IPasswordHasher<Usuario> passwordHasher)
     {
         _repositorioUsuario = repositorioUsuario;
-        _servicioPassword = servicioPassword;
+        _passwordHasher = passwordHasher;
     }
 
     [HttpPut("{id:int}")]
@@ -93,7 +93,7 @@ public class UsuarioController : ControllerBase
         };
 
         //Hashear la contraseña
-        usuario.PasswordHash = _servicioPassword.HashearPassword(usuario, dto.Password);
+        usuario.PasswordHash = _passwordHasher.HashPassword(usuario, dto.Password);
 
         //Guardar el usuario
         int idCreado = _repositorioUsuario.CrearUsuario(usuario);

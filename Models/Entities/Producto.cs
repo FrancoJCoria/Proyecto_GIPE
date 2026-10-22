@@ -10,6 +10,9 @@ public class Producto
     [Required]
     public string Nombre { get; set; } = string.Empty;
 
+    [MaxLength(500)]
+    public string? Descripcion { get; set; }
+
     public decimal CostoExtra { get; set; }
 
     [Required]

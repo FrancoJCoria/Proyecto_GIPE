@@ -1,4 +1,3 @@
-using System.ComponentModel.Design;
 using System.Data;
 using Microsoft.Extensions.Configuration;
 using MySqlConnector;
@@ -144,7 +143,7 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
         using var conexion = new MySqlConnection(connectionString);
         try{
         string consultaSql = @"UPDATE usuario
-        SET nombre = @Nombre, email = @Email, url_avatar = @url_avatar, rol = @Rol,estado = @Estado
+        SET nombre = @Nombre, email = @Email, url_avatar = @Url_avatar, rol = @Rol,estado = @Estado
         WHERE id = @Id;";
 
         using var comando = new MySqlCommand(consultaSql, conexion);

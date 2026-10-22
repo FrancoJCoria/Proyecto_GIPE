@@ -1,8 +1,10 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using MySqlConnector;
+using Proyecto_GIPE.Models.Entities;
 using Proyecto_GIPE.Models.IRepositorios;
 using Proyecto_GIPE.Models.Repositorios;
 using Proyecto_GIPE.Models.Servicios;
@@ -32,7 +34,8 @@ builder.Configuration["TokenAuthentication:Issuer"] = jwtIssuer;
 builder.Configuration["TokenAuthentication:Audience"] = jwtAudience;
 
 builder.Services.AddScoped<IRepositorioUsuario, RepositorioUsuario>();
-builder.Services.AddScoped<ServicioPassword>();
+builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
+builder.Services.AddScoped<ServicioSeed>();
 
 builder.Services.AddControllersWithViews();
 
@@ -78,6 +81,11 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    scope.ServiceProvider.GetRequiredService<ServicioSeed>().Ejecutar();
+}
 
 if (!app.Environment.IsDevelopment())
 {
