@@ -143,7 +143,8 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
         using var conexion = new MySqlConnection(connectionString);
         try{
         string consultaSql = @"UPDATE usuario
-        SET nombre = @Nombre, email = @Email, url_avatar = @Url_avatar, rol = @Rol,estado = @Estado
+        SET nombre = @Nombre, email = @Email, url_avatar = @Url_avatar, rol = @Rol, estado = @Estado,
+            password_hash = COALESCE(NULLIF(@PasswordHash, ''), password_hash)
         WHERE id = @Id;";
 
         using var comando = new MySqlCommand(consultaSql, conexion);
@@ -155,6 +156,7 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
         (object?)usuario.Url_avatar ?? DBNull.Value;       
         comando.Parameters.Add("@Rol", MySqlDbType.Int32).Value = (int)usuario.Rol;
         comando.Parameters.Add("@Estado", MySqlDbType.Bit).Value = usuario.Estado;
+        comando.Parameters.Add("@PasswordHash", MySqlDbType.VarChar, 255).Value = usuario.PasswordHash;
         conexion.Open();
 
         return comando.ExecuteNonQuery() > 0;
