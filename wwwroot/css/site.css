@@ -29,3 +29,19 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+
+.form-label,
+.form-check-label {
+  cursor: pointer;
+}
+
+.form-control {
+  cursor: text;
+  caret-color: #212529;
+}
+
+.form-select,
+.form-check-input {
+  cursor: pointer;
+}

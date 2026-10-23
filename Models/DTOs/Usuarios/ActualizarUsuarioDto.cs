@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Proyecto_GIPE.Models.Enums;
 
 namespace Proyecto_GIPE.Models.DTOs.Usuarios;
 
@@ -13,6 +14,9 @@ public class ActualizarUsuarioDto
     [EmailAddress(ErrorMessage ="El correo no tiene un formato valido")]
     [MaxLength(150)]
     public string Email { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "El rol es obligatorio")]
+    public RolUsuario? Rol { get; set; }
 
     [MaxLength(500)]
     [Url(ErrorMessage = "La URL del avatar no es valida.")]

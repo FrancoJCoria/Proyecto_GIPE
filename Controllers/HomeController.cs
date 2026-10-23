@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proyecto_GIPE.Models;
 
@@ -6,6 +7,7 @@ namespace Proyecto_GIPE.Controllers;
 
 public class HomeController : Controller
 {
+    [Authorize(Policy = "Empleado")]
     public IActionResult Index()
     {
         return View();

@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -21,7 +22,7 @@ var connectionString = new MySqlConnectionStringBuilder
     Port = uint.Parse(GetEnv("DB_PORT", "3306")),
     Database = GetEnv("DB_NAME", "bdgipe"),
     UserID = GetEnv("DB_USER", "root"),
-    Password = GetEnv("DB_PASSWORD"),
+    Password = GetEnv("DB_PASSWORD", ""),
     CharacterSet = "utf8mb4"
 }.ConnectionString;
 
@@ -45,6 +46,7 @@ builder.Services.AddScoped<IServicioUsuarioActual, ServicioUsuarioActual>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 builder.Services.AddScoped<ServicioSeed>();
+builder.Services.AddScoped<ServicioJwt>();
 
 builder.Services.AddControllersWithViews();
 
@@ -56,9 +58,14 @@ builder.Services
     })
     .AddCookie(options =>
     {
-        options.LoginPath = "/Usuarios/Login";
-        options.LogoutPath = "/Usuarios/Logout";
-        options.AccessDeniedPath = "/Home/AccesoDenegado";
+        options.Cookie.Name = "GIPE.Auth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.ReturnUrlParameter = "returnUrl";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
     })
@@ -73,6 +80,8 @@ builder.Services
             ValidIssuer = jwtIssuer,
             ValidAudience = jwtAudience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+            NameClaimType = ClaimTypes.Name,
+            RoleClaimType = ClaimTypes.Role,
             ClockSkew = TimeSpan.FromMinutes(1)
         };
     });
@@ -80,7 +89,7 @@ builder.Services
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("Dueno", policy => policy.RequireRole("Dueno"));
-    options.AddPolicy("Empleado", policy => policy.RequireRole("Empleado"));
+    options.AddPolicy("Empleado", policy => policy.RequireRole("Dueno", "Empleado"));
 });
 
 builder.Services.AddCors(options =>
@@ -100,6 +109,7 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
 
 // Los formularios envian numeros con punto decimal (input type=number); se fuerza
@@ -111,13 +121,13 @@ app.UseRequestLocalization(new RequestLocalizationOptions
     SupportedUICultures = [CultureInfo.InvariantCulture]
 });
 
-app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors("ApiCors");
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+app.MapControllers();
 
 app.MapControllerRoute(
     name: "default",
