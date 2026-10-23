@@ -1,0 +1,41 @@
+@model Insumo
+@{
+    ViewData["Title"] = $"Editar insumo {Model.Nombre}";
+}
+
+<h1 class="h3 mb-3">Editar insumo: @Model.Nombre</h1>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form asp-action="Editar" asp-route-id="@Model.Id" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="Nombre" class="form-label">Nombre *</label>
+                <input asp-for="Nombre" class="form-control" autocomplete="off" />
+                <span asp-validation-for="Nombre" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Unidad" class="form-label">Unidad de medida</label>
+                <select asp-for="Unidad" class="form-select" asp-items="Html.GetEnumSelectList<UnidadMedida>()"></select>
+                <span asp-validation-for="Unidad" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="CostoUnitario" class="form-label">Costo unitario ($) *</label>
+                <input asp-for="CostoUnitario" type="number" min="0" step="0.0001" class="form-control" />
+                <span asp-validation-for="CostoUnitario" class="text-danger small"></span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

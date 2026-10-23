@@ -1,0 +1,85 @@
+@model VentaDetalleViewModel
+@{
+    ViewData["Title"] = $"Venta #{Model.Venta.Id}";
+    var venta = Model.Venta;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Venta #@venta.Id</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary">&laquo; Volver</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0">Venta #@venta.Id</h5>
+                    @if (venta.Estado)
+                    {
+                        <span class="badge text-bg-success">Vigente</span>
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-secondary">Anulada</span>
+                    }
+                </div>
+
+                <dl class="row mb-0 small">
+                    <dt class="col-5">Fecha</dt>
+                    <dd class="col-7">@Formateos.FechaHora(venta.Fecha)</dd>
+                    <dt class="col-5">Cliente</dt>
+                    <dd class="col-7">@(Model.ClienteNombre ?? "Venta mostrador")</dd>
+                    <dt class="col-5">Registrada por</dt>
+                    <dd class="col-7">@Model.UsuarioNombre</dd>
+                    <dt class="col-5">Monto total</dt>
+                    <dd class="col-7 fw-bold">@Formateos.Dinero(venta.MontoTotal)</dd>
+                    <dt class="col-5">Costo total</dt>
+                    <dd class="col-7">@Formateos.Dinero(Model.TotalCosto)</dd>
+                    <dt class="col-5">Ganancia</dt>
+                    <dd class="col-7 @(Model.Ganancia >= 0 ? "text-success" : "text-danger") fw-bold">
+                        @Formateos.Dinero(Model.Ganancia)
+                    </dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card shadow-sm h-100">
+            <div class="card-header fw-bold">Items vendidos (precio y costo congelados al momento)</div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-end">Cantidad</th>
+                            <th class="text-end">Precio</th>
+                            <th class="text-end">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Items.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">La venta no tiene items registrados.</td>
+                            </tr>
+                        }
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>
+                                    @item.ProductoNombre
+                                    <small class="d-block text-muted">Costo unitario: @Formateos.Dinero(item.CostoMomento)</small>
+                                </td>
+                                <td class="text-end">@Formateos.Cantidad(item.Cantidad)</td>
+                                <td class="text-end">@Formateos.Dinero(item.PrecioMomento)</td>
+                                <td class="text-end fw-bold">@Formateos.Dinero(item.Subtotal)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
