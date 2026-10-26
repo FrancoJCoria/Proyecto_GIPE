@@ -43,6 +43,7 @@ builder.Services.AddScoped<IRepositorioProducto, RepositorioProducto>();
 builder.Services.AddScoped<IRepositorioGasto, RepositorioGasto>();
 builder.Services.AddScoped<IRepositorioVenta, RepositorioVenta>();
 builder.Services.AddScoped<IServicioUsuarioActual, ServicioUsuarioActual>();
+builder.Services.AddScoped<ServicioCalculadora>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 builder.Services.AddScoped<ServicioSeed>();

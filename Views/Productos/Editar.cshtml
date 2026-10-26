@@ -1,6 +1,7 @@
 @model Producto
 @{
     ViewData["Title"] = $"Editar producto {Model.Nombre}";
+    var costoInsumos = (decimal)ViewBag.CostoInsumos;
 }
 
 <h1 class="h3 mb-3">Editar producto: @Model.Nombre</h1>
@@ -56,6 +57,38 @@
                 <span asp-validation-for="UrlProducto" class="text-danger small"></span>
             </div>
 
+            <hr />
+
+            @* Oculto con el costo actual de la receta; la calculadora lo combina con lo que tipea el usuario. *@
+            <input type="hidden" id="CostoInsumos"
+                   value="@costoInsumos.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)" />
+
+            <div class="card bg-light border-0 mb-3" id="calculadora-producto">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">Calculadora: costo y precio sugerido</h6>
+                    <dl class="row mb-2 small align-items-center">
+                        <dt class="col-7">Costo de insumos (receta)</dt>
+                        <dd class="col-5 text-end mb-1" id="mostrar-costo-insumos">@Formateos.Dinero(costoInsumos)</dd>
+                        <dt class="col-7">Costo total (insumos + extra)</dt>
+                        <dd class="col-5 text-end fw-bold mb-1" id="mostrar-costo-total"></dd>
+                        <dt class="col-7">Precio sugerido (margen objetivo)</dt>
+                        <dd class="col-5 text-end mb-1" id="mostrar-precio-sugerido"></dd>
+                        <dt class="col-7">Margen actual (precio vs costo)</dt>
+                        <dd class="col-5 text-end mb-1" id="mostrar-margen-actual"></dd>
+                        <dt class="col-7">Ganancia por unidad</dt>
+                        <dd class="col-5 text-end mb-1" id="mostrar-ganancia"></dd>
+                    </dl>
+                    <button type="button" id="btn-usar-sugerido" class="btn btn-sm btn-outline-primary">Usar precio sugerido</button>
+                    @if (costoInsumos <= 0)
+                    {
+                        <div class="form-text">El producto todavia no tiene receta: el costo de insumos sumado aqui es 0.
+                            Cargala desde la ficha del producto.</div>
+                    }
+                    <div class="form-text">El precio sugerido solo se guarda si apretas "Usar precio sugerido"
+                        (o escribis el precio vos) y despues Guardar cambios.</div>
+                </div>
+            </div>
+
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Guardar cambios</button>
                 <a asp-action="Detalles" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancelar</a>
@@ -66,4 +99,5 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/productos.js" asp-append-version="true"></script>
 }

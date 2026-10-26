@@ -51,9 +51,26 @@
                         <dd class="col-6 text-end fw-bold">@Formateos.Dinero(Model.CostoTotal)</dd>
                         <dt class="col-6">Margen objetivo</dt>
                         <dd class="col-6 text-end">@Formateos.Cantidad(producto.MargenObjetivo) %</dd>
+                        <dt class="col-6">Precio sugerido</dt>
+                        <dd class="col-6 text-end">@Formateos.Dinero(Model.PrecioSugerido)</dd>
+                        <dt class="col-6">Margen act.</dt>
+                        <dd class="col-6 text-end @(Model.MargenActual < 0 ? "text-danger fw-bold" : "")">
+                            @Formateos.Cantidad(Model.MargenActual) %
+                        </dd>
+                        <dt class="col-6">Ganancia unitaria</dt>
+                        <dd class="col-6 text-end @(Model.GananciaUnitaria < 0 ? "text-danger fw-bold" : "")">
+                            @Formateos.Dinero(Model.GananciaUnitaria)
+                        </dd>
                     }
                     <dt class="col-6">Precio de venta</dt>
-                    <dd class="col-6 text-end">@Formateos.Dinero(producto.PrecioActual)</dd>
+                    <dd class="col-6 text-end">
+                        @Formateos.Dinero(producto.PrecioActual)
+                        @if (esDueno && producto.PrecioActual < Model.PrecioSugerido)
+                        {
+                            <span class="badge text-bg-warning"
+                                  title="El precio esta por debajo del sugerido segun la receta y el margen objetivo.">Bajo sugerido</span>
+                        }
+                    </dd>
                     <dt class="col-6">Stock actual</dt>
                     <dd class="col-6 text-end @(producto.StockActual <= 0 ? "text-danger fw-bold" : "")">
                         @Formateos.Cantidad(producto.StockActual)
