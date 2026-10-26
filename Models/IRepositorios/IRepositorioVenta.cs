@@ -6,8 +6,11 @@ namespace Proyecto_GIPE.Models.IRepositorios;
 
 public interface IRepositorioVenta
 {
-    /// <summary>Listado paginado de ventas, mas recientes primero.</summary>
-    ResultadoPaginado<VentaListaItem> ObtenerTodos(int pagina, int tamano);
+    /// <summary>
+    /// Listado paginado de ventas, mas recientes primero. Si se indica usuarioId,
+    /// solo devuelve las ventas registradas por ese usuario (empleado).
+    /// </summary>
+    ResultadoPaginado<VentaListaItem> ObtenerTodos(int pagina, int tamano, int? usuarioId = null);
 
     /// <summary>Venta con su cliente (si tiene), el usuario que la registro y sus items.</summary>
     VentaDetalleViewModel? ObtenerDetalle(int ventaId);

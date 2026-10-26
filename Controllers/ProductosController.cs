@@ -1,24 +1,32 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proyecto_GIPE.Models.Comunes;
 using Proyecto_GIPE.Models.Entities;
 using Proyecto_GIPE.Models.IRepositorios;
+using Proyecto_GIPE.Models.Servicios;
 using Proyecto_GIPE.Models.ViewModels;
 
 namespace Proyecto_GIPE.Controllers;
 
+// Ambos roles consultan el listado y la ficha; los cambios de maestro
+// (altas, stock y receta) quedan reservados al Dueno.
+[Authorize]
 public class ProductosController : Controller
 {
     private const int TamanoPagina = 10;
 
     private readonly IRepositorioProducto _repositorioProducto;
     private readonly IRepositorioInsumo _repositorioInsumo;
+    private readonly ServicioCalculadora _servicioCalculadora;
 
     public ProductosController(
         IRepositorioProducto repositorioProducto,
-        IRepositorioInsumo repositorioInsumo)
+        IRepositorioInsumo repositorioInsumo,
+        ServicioCalculadora servicioCalculadora)
     {
         _repositorioProducto = repositorioProducto;
         _repositorioInsumo = repositorioInsumo;
+        _servicioCalculadora = servicioCalculadora;
     }
 
     //------------------------------------------------------------LISTADO PAGINADO --------------------------------------------------------
@@ -35,12 +43,14 @@ public class ProductosController : Controller
     }
 
     //------------------------------------------------------------ALTA --------------------------------------------------------
+    [Authorize(Policy = "Dueno")]
     public IActionResult Crear()
     {
         return View(new Producto { MargenObjetivo = 30 });
     }
 
     [HttpPost]
+    [Authorize(Policy = "Dueno")]
     [ValidateAntiForgeryToken]
     public IActionResult Crear(Producto producto)
     {
@@ -64,6 +74,7 @@ public class ProductosController : Controller
     }
 
     //------------------------------------------------------------EDICION (STOCK MANUAL) --------------------------------------------------------
+    [Authorize(Policy = "Dueno")]
     public IActionResult Editar(int id)
     {
         var producto = _repositorioProducto.ObtenerPorId(id);
@@ -73,10 +84,16 @@ public class ProductosController : Controller
             return NoExiste();
         }
 
+        // Costo actual de los insumos de la receta para la calculadora en vivo.
+        // Si el producto todavia no tiene receta es 0; el costo extra se aplica solo.
+        var costoTotal = _repositorioProducto.ObtenerCostoProducto(id) ?? producto.CostoExtra;
+        ViewBag.CostoInsumos = ServicioCalculadora.Redondear2(costoTotal - producto.CostoExtra);
+
         return View(producto);
     }
 
     [HttpPost]
+    [Authorize(Policy = "Dueno")]
     [ValidateAntiForgeryToken]
     public IActionResult Editar(int id, Producto producto)
     {
@@ -118,6 +135,7 @@ public class ProductosController : Controller
 
     //------------------------------------------------------------CARGA MANUAL DE STOCK --------------------------------------------------------
     [HttpPost]
+    [Authorize(Policy = "Dueno")]
     [ValidateAntiForgeryToken]
     public IActionResult AjustarStock(int id, decimal stock)
     {
@@ -145,6 +163,7 @@ public class ProductosController : Controller
 
     //------------------------------------------------------------RECETA: AGREGAR / QUITAR INSUMO --------------------------------------------------------
     [HttpPost]
+    [Authorize(Policy = "Dueno")]
     [ValidateAntiForgeryToken]
     public IActionResult AgregarInsumo(int id, int insumoId, decimal cantidad)
     {
@@ -195,6 +214,7 @@ public class ProductosController : Controller
     }
 
     [HttpPost]
+    [Authorize(Policy = "Dueno")]
     [ValidateAntiForgeryToken]
     public IActionResult QuitarInsumo(int id, int insumoId)
     {
@@ -214,8 +234,33 @@ public class ProductosController : Controller
         return RedirectToAction(nameof(Detalles), new { id });
     }
 
-    //------------------------------------------------------------BUSQUEDA JSON (PARA SELECT2 EN VENTAS) --------------------------------------------------------
-    [HttpGet("Productos/BuscarJson")]
+    //------------------------------------------------------------CALCULO JSON (PARA LA CALCULADORA Y PRUEBAS) --------------------------------------------------------
+    // Devuelve costo, precio sugerido, margen real y ganancia del producto.
+    // Opcionalmente acepta un margen distinto para previsualizar (no modifica datos).
+    [HttpGet("Productos/CalculoJson/{id:int}/{margen?}")]
+    [Authorize(Policy = "Dueno")]
+    public IActionResult CalculoJson(int id, decimal? margen = null)
+    {
+        var producto = _repositorioProducto.ObtenerPorId(id);
+
+        if (producto is null)
+        {
+            return NotFound(new { mensaje = "El producto no existe." });
+        }
+
+        if (margen.HasValue && (margen < 0 || margen > 100))
+        {
+            ModelState.AddModelError("margen", "El margen debe estar entre 0 y 100.");
+            return ValidationProblem();
+        }
+
+        var receta = _repositorioProducto.ObtenerReceta(id);
+        var calculo = _servicioCalculadora.Calcular(receta, producto, margen);
+
+        return Json(calculo);
+    }
+
+    //------------------------------------------------------------BUSQUEDA JSON (PARA SELECT2 EN VENTAS) --------------------------------------------------------    [HttpGet("Productos/BuscarJson")]
     public IActionResult BuscarJson(string term)
     {
         var productos = _repositorioProducto.ObtenerActivos();
@@ -240,6 +285,7 @@ public class ProductosController : Controller
 
     //------------------------------------------------------------BAJA LOGICA / REACTIVAR --------------------------------------------------------
     [HttpPost]
+    [Authorize(Policy = "Dueno")]
     [ValidateAntiForgeryToken]
     public IActionResult DarDeBaja(int id)
     {
@@ -247,6 +293,7 @@ public class ProductosController : Controller
     }
 
     [HttpPost]
+    [Authorize(Policy = "Dueno")]
     [ValidateAntiForgeryToken]
     public IActionResult Activar(int id)
     {
@@ -256,11 +303,17 @@ public class ProductosController : Controller
     //------------------------------------------------------------FUNCIONES --------------------------------------------------------
     private ProductoDetalleViewModel ArmarDetalle(Producto producto)
     {
+        var receta = _repositorioProducto.ObtenerReceta(producto.Id);
+        var calculo = _servicioCalculadora.Calcular(receta, producto);
+
         return new ProductoDetalleViewModel
         {
             Producto = producto,
-            Receta = _repositorioProducto.ObtenerReceta(producto.Id),
-            CostoTotal = _repositorioProducto.ObtenerCostoProducto(producto.Id) ?? producto.CostoExtra,
+            Receta = receta,
+            CostoTotal = calculo.CostoTotal,
+            PrecioSugerido = calculo.PrecioSugerido,
+            MargenActual = calculo.MargenActual,
+            GananciaUnitaria = calculo.GananciaUnitaria,
             InsumosDisponibles = _repositorioInsumo.ObtenerActivos()
         };
     }

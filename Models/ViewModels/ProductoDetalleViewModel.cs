@@ -19,6 +19,15 @@ public class ProductoDetalleViewModel
     /// <summary>Costo de solo los insumos de la receta, sin el costo extra.</summary>
     public decimal CostoInsumos => CostoTotal - CostoExtra;
 
+    /// <summary>Precio sugerido: costo total con el margen objetivo aplicado.</summary>
+    public decimal PrecioSugerido { get; set; }
+
+    /// <summary>Margen real del precio vigente sobre el costo total (%).</summary>
+    public decimal MargenActual { get; set; }
+
+    /// <summary>Ganancia unitaria: precio vigente menos costo total.</summary>
+    public decimal GananciaUnitaria { get; set; }
+
     /// <summary>Insumos activos que se pueden agregar a la receta.</summary>
     public IList<Insumo> InsumosDisponibles { get; set; } = [];
 }

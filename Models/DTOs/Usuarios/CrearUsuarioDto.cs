@@ -7,7 +7,7 @@ public class CrearUsuarioDto
 {
     [Required(ErrorMessage = "El nombre es obligatorio.")]
     [MinLength(6)]
-    [MaxLength(20)]
+    [MaxLength(150)]
     public string Nombre { get; set; } = string.Empty;
 
 

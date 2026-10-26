@@ -43,6 +43,7 @@ builder.Services.AddScoped<IRepositorioProducto, RepositorioProducto>();
 builder.Services.AddScoped<IRepositorioGasto, RepositorioGasto>();
 builder.Services.AddScoped<IRepositorioVenta, RepositorioVenta>();
 builder.Services.AddScoped<IServicioUsuarioActual, ServicioUsuarioActual>();
+builder.Services.AddScoped<ServicioCalculadora>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 builder.Services.AddScoped<ServicioSeed>();
@@ -100,9 +101,20 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
+// Seed solo para desarrollo (o cuando se fuerza con SEED_USUARIOS=true):
+// no conviene crear usuarios con contrasenas conocidas en produccion.
+var seedHabilitado = app.Environment.IsDevelopment()
+    || string.Equals(
+        Environment.GetEnvironmentVariable("SEED_USUARIOS"),
+        "true",
+        StringComparison.OrdinalIgnoreCase);
+
+if (seedHabilitado)
 {
-    scope.ServiceProvider.GetRequiredService<ServicioSeed>().Ejecutar();
+    using (var scope = app.Services.CreateScope())
+    {
+        scope.ServiceProvider.GetRequiredService<ServicioSeed>().Ejecutar();
+    }
 }
 
 if (!app.Environment.IsDevelopment())

@@ -17,10 +17,13 @@ public class RepositorioVenta : RepositorioBase, IRepositorioVenta
     }
 
     //------------------------------------------------------------LISTADO PAGINADO --------------------------------------------------------
-    public ResultadoPaginado<VentaListaItem> ObtenerTodos(int pagina, int tamano)
+    public ResultadoPaginado<VentaListaItem> ObtenerTodos(int pagina, int tamano, int? usuarioId = null)
     {
         pagina = Math.Max(1, pagina);
         var resultado = new ResultadoPaginado<VentaListaItem>();
+
+        // Filtro del empleado: solo sus ventas. Para el Dueno llega null y ve todas.
+        var filtroUsuario = usuarioId.HasValue ? "WHERE v.usuario_id = @UsuarioId" : "";
 
         try
         {
@@ -29,18 +32,24 @@ public class RepositorioVenta : RepositorioBase, IRepositorioVenta
 
             int offset = (pagina - 1) * tamano;
 
-            using (var comando = new MySqlCommand(@"
+            using (var comando = new MySqlCommand($@"
             SELECT v.id, v.fecha, v.monto_total, v.estado,
                    c.nombre AS cliente_nombre,
                    u.nombre AS usuario_nombre
             FROM venta v
             JOIN usuario u ON u.id = v.usuario_id
             LEFT JOIN cliente c ON c.id = v.cliente_id
+            {filtroUsuario}
             ORDER BY v.fecha DESC, v.id DESC
             LIMIT @Offset, @Tamano;", conexion))
             {
                 comando.Parameters.Add("@Offset", MySqlDbType.Int32).Value = offset;
                 comando.Parameters.Add("@Tamano", MySqlDbType.Int32).Value = tamano;
+
+                if (usuarioId.HasValue)
+                {
+                    comando.Parameters.Add("@UsuarioId", MySqlDbType.Int32).Value = usuarioId.Value;
+                }
 
                 using var lector = comando.ExecuteReader();
 
@@ -50,8 +59,13 @@ public class RepositorioVenta : RepositorioBase, IRepositorioVenta
                 }
             }
 
-            using (var comando = new MySqlCommand(@"SELECT COUNT(*) FROM venta;", conexion))
+            using (var comando = new MySqlCommand($@"SELECT COUNT(*) FROM venta v {filtroUsuario};", conexion))
             {
+                if (usuarioId.HasValue)
+                {
+                    comando.Parameters.Add("@UsuarioId", MySqlDbType.Int32).Value = usuarioId.Value;
+                }
+
                 resultado.Total = Convert.ToInt32(comando.ExecuteScalar());
             }
         }

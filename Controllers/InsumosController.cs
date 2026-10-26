@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proyecto_GIPE.Models.Comunes;
 using Proyecto_GIPE.Models.Entities;
@@ -5,6 +6,8 @@ using Proyecto_GIPE.Models.IRepositorios;
 
 namespace Proyecto_GIPE.Controllers;
 
+// La gestion de insumos (costos internos) queda reservada al Dueno.
+[Authorize(Policy = "Dueno")]
 public class InsumosController : Controller
 {
     private const int TamanoPagina = 10;

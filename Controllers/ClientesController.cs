@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proyecto_GIPE.Models.Comunes;
 using Proyecto_GIPE.Models.Entities;
@@ -6,6 +7,8 @@ using Proyecto_GIPE.Models.ViewModels;
 
 namespace Proyecto_GIPE.Controllers;
 
+// Tanto el Dueno como el Empleado gestionan clientes (ambos tienen vista completa).
+[Authorize]
 public class ClientesController : Controller
 {
     private const int TamanoPagina = 10;

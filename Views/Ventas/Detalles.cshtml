@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = $"Venta #{Model.Venta.Id}";
     var venta = Model.Venta;
+    var esDueno = User.IsInRole("Dueno");
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -34,12 +35,15 @@
                     <dd class="col-7">@Model.UsuarioNombre</dd>
                     <dt class="col-5">Monto total</dt>
                     <dd class="col-7 fw-bold">@Formateos.Dinero(venta.MontoTotal)</dd>
-                    <dt class="col-5">Costo total</dt>
-                    <dd class="col-7">@Formateos.Dinero(Model.TotalCosto)</dd>
-                    <dt class="col-5">Ganancia</dt>
-                    <dd class="col-7 @(Model.Ganancia >= 0 ? "text-success" : "text-danger") fw-bold">
-                        @Formateos.Dinero(Model.Ganancia)
-                    </dd>
+                    @if (esDueno)
+                    {
+                        <dt class="col-5">Costo total</dt>
+                        <dd class="col-7">@Formateos.Dinero(Model.TotalCosto)</dd>
+                        <dt class="col-5">Ganancia</dt>
+                        <dd class="col-7 @(Model.Ganancia >= 0 ? "text-success" : "text-danger") fw-bold">
+                            @Formateos.Dinero(Model.Ganancia)
+                        </dd>
+                    }
                 </dl>
             </div>
         </div>
@@ -70,7 +74,10 @@
                             <tr>
                                 <td>
                                     @item.ProductoNombre
-                                    <small class="d-block text-muted">Costo unitario: @Formateos.Dinero(item.CostoMomento)</small>
+                                    @if (esDueno)
+                                    {
+                                        <small class="d-block text-muted">Costo unitario: @Formateos.Dinero(item.CostoMomento)</small>
+                                    }
                                 </td>
                                 <td class="text-end">@Formateos.Cantidad(item.Cantidad)</td>
                                 <td class="text-end">@Formateos.Dinero(item.PrecioMomento)</td>

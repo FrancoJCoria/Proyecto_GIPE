@@ -1,10 +1,10 @@
 @model ResultadoPaginado<VentaListaItem>
 @{
-    ViewData["Title"] = "Ventas";
+    ViewData["Title"] = User.IsInRole("Dueno") ? "Ventas" : "Mis ventas";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Ventas</h1>
+    <h1 class="h3 mb-0">@ViewData["Title"]</h1>
     <a asp-action="Crear" class="btn btn-primary">+ Nueva venta</a>
 </div>
 
