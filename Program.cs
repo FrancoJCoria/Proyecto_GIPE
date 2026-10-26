@@ -100,9 +100,20 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
+// Seed solo para desarrollo (o cuando se fuerza con SEED_USUARIOS=true):
+// no conviene crear usuarios con contrasenas conocidas en produccion.
+var seedHabilitado = app.Environment.IsDevelopment()
+    || string.Equals(
+        Environment.GetEnvironmentVariable("SEED_USUARIOS"),
+        "true",
+        StringComparison.OrdinalIgnoreCase);
+
+if (seedHabilitado)
 {
-    scope.ServiceProvider.GetRequiredService<ServicioSeed>().Ejecutar();
+    using (var scope = app.Services.CreateScope())
+    {
+        scope.ServiceProvider.GetRequiredService<ServicioSeed>().Ejecutar();
+    }
 }
 
 if (!app.Environment.IsDevelopment())

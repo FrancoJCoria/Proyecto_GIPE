@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proyecto_GIPE.Models.Comunes;
 using Proyecto_GIPE.Models.Excepciones;
@@ -7,6 +8,7 @@ using Proyecto_GIPE.Models.ViewModels;
 
 namespace Proyecto_GIPE.Controllers;
 
+[Authorize]
 public class VentasController : Controller
 {
     private const int TamanoPagina = 10;
@@ -29,11 +31,12 @@ public class VentasController : Controller
     }
 
     //------------------------------------------------------------LISTADO PAGINADO --------------------------------------------------------
-    // TODO Fase 4 (roles): con autenticacion, el empleado solo ve sus ventas
-    // (pasar su id al repositorio) y el Dueno ve todas.
+    // El Dueno ve todas las ventas; el Empleado solo las que registro.
     public IActionResult Index(int pagina = 1)
     {
-        var resultado = _repositorioVenta.ObtenerTodos(pagina, TamanoPagina);
+        int? usuarioId = User.IsInRole("Dueno") ? null : _servicioUsuarioActual.ObtenerUsuarioId();
+
+        var resultado = _repositorioVenta.ObtenerTodos(pagina, TamanoPagina, usuarioId);
 
         AyudantePaginacion.CargarEnViewData(ViewData, pagina, TamanoPagina, resultado.Total, nameof(Index));
 
@@ -88,8 +91,7 @@ public class VentasController : Controller
 
         try
         {
-            // Placeholder mientras no hay login; con roles, sera el usuario de la sesion.
-            // TODO Fase 4: filtro para que el empleado solo vea/cree ventas propias si corresponde.
+            // El id viene del claim del usuario con sesion activa ([Authorize] en el controller).
             int usuarioId = _servicioUsuarioActual.ObtenerUsuarioId();
 
             int ventaId = _repositorioVenta.CrearVenta(modelo.ClienteId, usuarioId, lineas);
@@ -115,6 +117,13 @@ public class VentasController : Controller
         if (detalle is null)
         {
             TempData["Error"] = "La venta solicitada no existe.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // El Empleado no puede ver ventas de otros usuarios.
+        if (!User.IsInRole("Dueno") && detalle.Venta.UsuarioId != _servicioUsuarioActual.ObtenerUsuarioId())
+        {
+            TempData["Error"] = "No tenés permiso para ver esta venta.";
             return RedirectToAction(nameof(Index));
         }
 

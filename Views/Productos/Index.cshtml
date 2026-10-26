@@ -6,7 +6,10 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3 mb-0">Productos</h1>
-    <a asp-action="Crear" class="btn btn-primary">+ Nuevo producto</a>
+    @if (User.IsInRole("Dueno"))
+    {
+        <a asp-action="Crear" class="btn btn-primary">+ Nuevo producto</a>
+    }
 </div>
 
 <form method="get" class="row g-2 mb-3">
@@ -61,19 +64,22 @@
                         </td>
                         <td class="text-end">
                             <a asp-action="Detalles" asp-route-id="@producto.Id" class="btn btn-sm btn-outline-secondary">Detalles</a>
-                            <a asp-action="Editar" asp-route-id="@producto.Id" class="btn btn-sm btn-outline-primary">Editar</a>
-                            @if (producto.Estado)
+                            @if (User.IsInRole("Dueno"))
                             {
-                                <form asp-action="DarDeBaja" asp-route-id="@producto.Id" method="post" class="d-inline"
-                                      onsubmit="return confirm('¿Dar de baja el producto @producto.Nombre?');">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">Dar de baja</button>
-                                </form>
-                            }
-                            else
-                            {
-                                <form asp-action="Activar" asp-route-id="@producto.Id" method="post" class="d-inline">
-                                    <button type="submit" class="btn btn-sm btn-outline-success">Activar</button>
-                                </form>
+                                <a asp-action="Editar" asp-route-id="@producto.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                                @if (producto.Estado)
+                                {
+                                    <form asp-action="DarDeBaja" asp-route-id="@producto.Id" method="post" class="d-inline"
+                                          onsubmit="return confirm('¿Dar de baja el producto @producto.Nombre?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Dar de baja</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-action="Activar" asp-route-id="@producto.Id" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-success">Activar</button>
+                                    </form>
+                                }
                             }
                         </td>
                     </tr>

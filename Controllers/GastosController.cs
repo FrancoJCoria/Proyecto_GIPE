@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proyecto_GIPE.Models.Comunes;
 using Proyecto_GIPE.Models.Entities;
@@ -7,6 +8,8 @@ using Proyecto_GIPE.Models.ViewModels;
 
 namespace Proyecto_GIPE.Controllers;
 
+// Los gastos solo los gestiona el Dueno.
+[Authorize(Policy = "Dueno")]
 public class GastosController : Controller
 {
     private const int TamanoPagina = 10;
@@ -23,7 +26,6 @@ public class GastosController : Controller
     }
 
     //------------------------------------------------------------LISTADO PAGINADO CON FILTROS --------------------------------------------------------
-    // TODO Fase 4 (roles): restringir a Dueno con [Authorize(Policy = "Dueno")].
     public IActionResult Index(GastoFiltrosViewModel filtros)
     {
         filtros ??= new GastoFiltrosViewModel();
@@ -80,8 +82,7 @@ public class GastosController : Controller
             return View(gasto);
         }
 
-        // Placeholder mientras no hay login: se asocia el gasto al usuario actual.
-        // TODO Fase 4: con autenticacion el id viene del claim del usuario logueado.
+        // El id viene del claim del usuario con sesion activa ([Authorize(Policy = "Dueno")]).
         gasto.UsuarioId = _servicioUsuarioActual.ObtenerUsuarioId();
         gasto.Descripcion = gasto.Descripcion.Trim();
 

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proyecto_GIPE.Models.Comunes;
 using Proyecto_GIPE.Models.Entities;
@@ -6,6 +7,9 @@ using Proyecto_GIPE.Models.ViewModels;
 
 namespace Proyecto_GIPE.Controllers;
 
+// Ambos roles consultan el listado y la ficha; los cambios de maestro
+// (altas, stock y receta) quedan reservados al Dueno.
+[Authorize]
 public class ProductosController : Controller
 {
     private const int TamanoPagina = 10;
@@ -35,12 +39,14 @@ public class ProductosController : Controller
     }
 
     //------------------------------------------------------------ALTA --------------------------------------------------------
+    [Authorize(Policy = "Dueno")]
     public IActionResult Crear()
     {
         return View(new Producto { MargenObjetivo = 30 });
     }
 
     [HttpPost]
+    [Authorize(Policy = "Dueno")]
     [ValidateAntiForgeryToken]
     public IActionResult Crear(Producto producto)
     {
@@ -64,6 +70,7 @@ public class ProductosController : Controller
     }
 
     //------------------------------------------------------------EDICION (STOCK MANUAL) --------------------------------------------------------
+    [Authorize(Policy = "Dueno")]
     public IActionResult Editar(int id)
     {
         var producto = _repositorioProducto.ObtenerPorId(id);
@@ -77,6 +84,7 @@ public class ProductosController : Controller
     }
 
     [HttpPost]
+    [Authorize(Policy = "Dueno")]
     [ValidateAntiForgeryToken]
     public IActionResult Editar(int id, Producto producto)
     {
@@ -118,6 +126,7 @@ public class ProductosController : Controller
 
     //------------------------------------------------------------CARGA MANUAL DE STOCK --------------------------------------------------------
     [HttpPost]
+    [Authorize(Policy = "Dueno")]
     [ValidateAntiForgeryToken]
     public IActionResult AjustarStock(int id, decimal stock)
     {
@@ -145,6 +154,7 @@ public class ProductosController : Controller
 
     //------------------------------------------------------------RECETA: AGREGAR / QUITAR INSUMO --------------------------------------------------------
     [HttpPost]
+    [Authorize(Policy = "Dueno")]
     [ValidateAntiForgeryToken]
     public IActionResult AgregarInsumo(int id, int insumoId, decimal cantidad)
     {
@@ -195,6 +205,7 @@ public class ProductosController : Controller
     }
 
     [HttpPost]
+    [Authorize(Policy = "Dueno")]
     [ValidateAntiForgeryToken]
     public IActionResult QuitarInsumo(int id, int insumoId)
     {
@@ -240,6 +251,7 @@ public class ProductosController : Controller
 
     //------------------------------------------------------------BAJA LOGICA / REACTIVAR --------------------------------------------------------
     [HttpPost]
+    [Authorize(Policy = "Dueno")]
     [ValidateAntiForgeryToken]
     public IActionResult DarDeBaja(int id)
     {
@@ -247,6 +259,7 @@ public class ProductosController : Controller
     }
 
     [HttpPost]
+    [Authorize(Policy = "Dueno")]
     [ValidateAntiForgeryToken]
     public IActionResult Activar(int id)
     {
