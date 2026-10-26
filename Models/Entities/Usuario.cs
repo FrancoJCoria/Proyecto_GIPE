@@ -9,7 +9,7 @@ public class Usuario
     public int Id {get; set;}
 
     [Required(ErrorMessage = "El nombre del usuario es obligatorio.")]
-    [MaxLength(20, ErrorMessage = "El nombre supera los 20 caracteres."), MinLength(6, ErrorMessage = "El nombre debe contener 6 o mas caracteres.")]
+    [MaxLength(150, ErrorMessage = "El nombre supera los 150 caracteres."), MinLength(6, ErrorMessage = "El nombre debe contener 6 o mas caracteres.")]
     public string Nombre {get; set;} = string.Empty;
 
     [Required]

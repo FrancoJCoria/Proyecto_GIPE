@@ -9,9 +9,14 @@ namespace Proyecto_GIPE.Models.Repositorios;
 
 public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
 {
-    public RepositorioUsuario(IConfiguration configuration)
+    private readonly ILogger<RepositorioUsuario> _logger;
+
+    public RepositorioUsuario(
+        IConfiguration configuration,
+        ILogger<RepositorioUsuario> logger)
         : base(configuration)
     {
+        _logger = logger;
     }
 
 //------------------------------------------------------------OBTENER TODOS LOS USUARIOS LIST --------------------------------------------------------
@@ -41,7 +46,7 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
     }
     catch (Exception e)
     {
-        Console.WriteLine($"Error al obtener los usuarios: {e.Message}");
+        _logger.LogError(e, "Error al obtener los usuarios");
         return lista;
     }
     }
@@ -74,7 +79,7 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
     }
     catch (Exception e)
     {
-        Console.WriteLine($"Error al obtener el usuario por email: {e.Message}");
+        _logger.LogError(e, "Error al obtener el usuario por email: {Email}", email);
         return null;
     }
     }
@@ -103,7 +108,7 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
             return null;
         }catch(Exception e)
         {
-            Console.WriteLine($"Error al obtener el usario por ID {e.Message}");
+            _logger.LogError(e, "Error al obtener el usuario por ID {Id}", id);
             return null;
         }
     }
@@ -119,10 +124,10 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
 
         using var comando = new MySqlCommand(consultaSql, conexion);
 
-        comando.Parameters.Add("@Nombre", MySqlDbType.VarChar, 20).Value = usuario.Nombre;
+        comando.Parameters.Add("@Nombre", MySqlDbType.VarChar, 150).Value = usuario.Nombre;
         comando.Parameters.Add("@Email", MySqlDbType.VarChar, 150).Value = usuario.Email;
         comando.Parameters.Add("@PasswordHash", MySqlDbType.VarChar, 255).Value = usuario.PasswordHash;
-        comando.Parameters.Add("@Rol", MySqlDbType.Int32).Value = (int)usuario.Rol;
+        comando.Parameters.Add("@Rol", MySqlDbType.VarChar, 20).Value = usuario.Rol.ToString();
         comando.Parameters.Add("@Estado", MySqlDbType.Bit).Value = usuario.Estado;
         comando.Parameters.Add("@Url_avatar", MySqlDbType.VarChar, 500).Value = usuario.Url_avatar;
 
@@ -130,7 +135,7 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
 
         return Convert.ToInt32(comando.ExecuteScalar());
         }catch(Exception e){
-            Console.WriteLine($"Error al crear el usuario: {e.Message}");
+            _logger.LogError(e, "Error al crear el usuario {Email}", usuario.Email);
             return 0;
         }
     }
@@ -150,18 +155,18 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
         using var comando = new MySqlCommand(consultaSql, conexion);
 
         comando.Parameters.Add("@Id", MySqlDbType.Int32).Value = usuario.Id;
-        comando.Parameters.Add("@Nombre", MySqlDbType.VarChar, 20).Value = usuario.Nombre;
+        comando.Parameters.Add("@Nombre", MySqlDbType.VarChar, 150).Value = usuario.Nombre;
         comando.Parameters.Add("@Email", MySqlDbType.VarChar, 150).Value = usuario.Email;
         comando.Parameters.Add("@Url_avatar", MySqlDbType.VarChar, 500).Value =
         (object?)usuario.Url_avatar ?? DBNull.Value;       
-        comando.Parameters.Add("@Rol", MySqlDbType.Int32).Value = (int)usuario.Rol;
+        comando.Parameters.Add("@Rol", MySqlDbType.VarChar, 20).Value = usuario.Rol.ToString();
         comando.Parameters.Add("@Estado", MySqlDbType.Bit).Value = usuario.Estado;
         comando.Parameters.Add("@PasswordHash", MySqlDbType.VarChar, 255).Value = usuario.PasswordHash;
         conexion.Open();
 
         return comando.ExecuteNonQuery() > 0;
         }catch(Exception e){
-            Console.WriteLine($"Error al actualizar el usuario: {e.Message}");
+            _logger.LogError(e, "Error al actualizar el usuario {Email}", usuario.Email);
             return false;
         }
     }
@@ -187,7 +192,7 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
         return comando.ExecuteNonQuery() > 0;
         }catch(Exception e)
         {
-            Console.WriteLine($"Error al cambiar el estado de usuario: {e.Message}");
+            _logger.LogError(e, "Error al cambiar el estado del usuario {Id}", id);
             return false;
         }
     }
@@ -222,7 +227,7 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
 
         }catch(Exception e)
         {
-            Console.WriteLine($"Error al modificar el avatar de usuario {e.Message}");
+            _logger.LogError(e, "Error al modificar el avatar del usuario {Id}", id);
             return null;
         }
     }

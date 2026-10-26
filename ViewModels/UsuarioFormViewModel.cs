@@ -9,7 +9,7 @@ public class UsuarioFormViewModel
 
     [Required(ErrorMessage = "El nombre es obligatorio.")]
     [MinLength(6, ErrorMessage = "El nombre debe tener al menos 6 caracteres.")]
-    [MaxLength(20, ErrorMessage = "El nombre no puede superar los 20 caracteres.")]
+    [MaxLength(150, ErrorMessage = "El nombre no puede superar los 150 caracteres.")]
     [Display(Name = "Nombre")]
     public string Nombre { get; set; } = string.Empty;
 
