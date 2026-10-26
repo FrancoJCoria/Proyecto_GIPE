@@ -1,0 +1,40 @@
+@{
+    // La paginacion se pasa por ViewData (clave "Paginacion"), armada por el controlador
+    // con AyudantePaginacion.CargarEnViewData. Si no hay paginacion, no se dibuja.
+    var paginacion = ViewData[AyudantePaginacion.ClaveViewData] as PaginacionViewModel;
+
+    if (paginacion is not null)
+    {
+        var rotasPara = new Func<int, Dictionary<string, string?>>(pagina =>
+        {
+            var rotas = new Dictionary<string, string?>(paginacion.Rotas) { ["pagina"] = pagina.ToString() };
+            return rotas;
+        });
+
+        int inicio = Math.Max(1, paginacion.Pagina - 3);
+        int fin = Math.Min(paginacion.TotalPaginas, inicio + 6);
+        inicio = Math.Max(1, fin - 6);
+
+        if (paginacion.TotalPaginas > 1)
+        {
+            <nav aria-label="Paginado" class="mt-3">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item @(paginacion.Pagina == 1 ? "disabled" : "")">
+                        <a class="page-link" asp-action="@paginacion.Accion" asp-controller="@paginacion.Controlador" asp-all-route-data="rotasPara(1)">&laquo;</a>
+                    </li>
+
+                    @for (var numero = inicio; numero <= fin; numero++)
+                    {
+                        <li class="page-item @(numero == paginacion.Pagina ? "active" : "")">
+                            <a class="page-link" asp-action="@paginacion.Accion" asp-controller="@paginacion.Controlador" asp-all-route-data="rotasPara(numero)">@numero</a>
+                        </li>
+                    }
+
+                    <li class="page-item @(paginacion.Pagina == paginacion.TotalPaginas ? "disabled" : "")">
+                        <a class="page-link" asp-action="@paginacion.Accion" asp-controller="@paginacion.Controlador" asp-all-route-data="rotasPara(paginacion.TotalPaginas)">&raquo;</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    }
+}

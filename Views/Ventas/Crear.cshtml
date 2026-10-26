@@ -1,0 +1,113 @@
+@model VentaCrearViewModel
+@{
+    ViewData["Title"] = "Nueva venta";
+    var clientes = (IList<Cliente>?)ViewBag.Clientes ?? [];
+    var productos = (IList<Producto>?)ViewBag.Productos ?? [];
+    var hayProductos = productos.Count > 0;
+}
+
+<link rel="stylesheet" href="~/lib/select2/dist/css/select2.min.css" asp-append-version="true" />
+
+<h1 class="h3 mb-3">Nueva venta</h1>
+
+@if (!hayProductos)
+{
+    <div class="alert alert-warning">
+        No hay productos activos para vender. Crea o reactiva productos
+        <a asp-controller="Productos" asp-action="Index">aqui</a>.
+    </div>
+}
+
+<form asp-action="Crear" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">Items de la venta</span>
+                    <button type="button" id="boton-agregar-item" class="btn btn-sm btn-outline-primary">+ Agregar item</button>
+                </div>
+                <div class="card-body" id="items-venta">
+                    @if (hayProductos)
+                    {
+                        <div id="items-filas">
+                            @for (var i = 0; i < Model.Items.Count; i++)
+                            {
+                                var item = Model.Items[i];
+                                <div class="row g-2 fila-item align-items-center py-2 border-bottom">
+                                    <div class="col-md-6">
+                                        <select name="Items[@i].ProductoId" data-vinculo="ProductoId" class="form-select js-producto">
+                                            <option value="">Elegir producto...</option>
+                                            @foreach (var producto in productos)
+                                            {
+                                                <option value="@producto.Id"
+                                                        data-precio="@producto.PrecioActual.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
+                                                        data-stock="@producto.StockActual.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
+                                                        selected="@(item.ProductoId == producto.Id)">
+                                                    @producto.Nombre - @Formateos.Dinero(producto.PrecioActual) - stock: @Formateos.Cantidad(producto.StockActual)
+                                                </option>
+                                            }
+                                        </select>
+                                        <small class="text-muted js-stock"></small>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <input type="number" name="Items[@i].Cantidad" data-vinculo="Cantidad"
+                                               class="form-control js-cantidad" min="0.01" step="0.01"
+                                               value="@(item.Cantidad?.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) ?? "1")" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <span class="js-subtotal d-block text-end text-muted">$ 0,00</span>
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-danger js-quitar-fila">Quitar</button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="d-flex justify-content-end align-items-center pt-3">
+                            <strong class="me-2">Total estimado:</strong>
+                            <span id="total-venta" class="fs-5 fw-bold">$ 0,00</span>
+                        </div>
+                        <div class="form-text">
+                            El total final se calcula con el precio de cada producto al momento de guardar la venta.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header fw-bold">Cliente</div>
+                <div class="card-body">
+                    <label class="form-label small mb-1" for="ClienteId">Cliente (opcional)</label>
+                    <select asp-for="ClienteId" class="form-select">
+                        <option value="">Sin cliente (venta mostrador)</option>
+                        @foreach (var cliente in clientes)
+                        {
+                            <option value="@cliente.Id" selected="@(Model.ClienteId == cliente.Id)">
+                                @(cliente.Nombre + (string.IsNullOrWhiteSpace(cliente.Apellido) ? "" : " " + cliente.Apellido))
+                            </option>
+                        }
+                    </select>
+                    <div class="form-text mt-2">Los clientes se crean desde el menu Clientes.</div>
+
+                    <hr />
+
+                    <div class="d-flex flex-column gap-2">
+                        <button type="submit" class="btn btn-primary" @(hayProductos ? "" : "disabled")>Registrar venta</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/select2/dist/js/select2.min.js" asp-append-version="true"></script>
+    <script src="~/js/ventas.js" asp-append-version="true"></script>
+}

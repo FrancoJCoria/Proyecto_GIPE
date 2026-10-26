@@ -1,8 +1,10 @@
+using System.Globalization;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.IdentityModel.Tokens;
 using MySqlConnector;
 using Proyecto_GIPE.Models.Entities;
@@ -35,6 +37,13 @@ builder.Configuration["TokenAuthentication:Issuer"] = jwtIssuer;
 builder.Configuration["TokenAuthentication:Audience"] = jwtAudience;
 
 builder.Services.AddScoped<IRepositorioUsuario, RepositorioUsuario>();
+builder.Services.AddScoped<IRepositorioCliente, RepositorioCliente>();
+builder.Services.AddScoped<IRepositorioInsumo, RepositorioInsumo>();
+builder.Services.AddScoped<IRepositorioProducto, RepositorioProducto>();
+builder.Services.AddScoped<IRepositorioGasto, RepositorioGasto>();
+builder.Services.AddScoped<IRepositorioVenta, RepositorioVenta>();
+builder.Services.AddScoped<IServicioUsuarioActual, ServicioUsuarioActual>();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 builder.Services.AddScoped<ServicioSeed>();
 builder.Services.AddScoped<ServicioJwt>();
@@ -102,6 +111,15 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
     app.UseHttpsRedirection();
 }
+
+// Los formularios envian numeros con punto decimal (input type=number); se fuerza
+// cultura invariante para que el binding no rompa en servidores con es-AR (coma decimal).
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(CultureInfo.InvariantCulture),
+    SupportedCultures = [CultureInfo.InvariantCulture],
+    SupportedUICultures = [CultureInfo.InvariantCulture]
+});
 
 app.UseRouting();
 app.UseCors("ApiCors");

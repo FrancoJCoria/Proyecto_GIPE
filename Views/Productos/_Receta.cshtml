@@ -1,0 +1,84 @@
+@model ProductoDetalleViewModel
+@{
+    var producto = Model.Producto;
+}
+
+@* Receta del producto en vista parcial: lineas con costo, alta de insumo y quitado de lineas. *@
+<div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-bold">Receta del producto</span>
+        <span class="text-muted small">
+            Insumos: @Formateos.Dinero(Model.CostoInsumos)
+            &nbsp;+&nbsp;extra: @Formateos.Dinero(Model.CostoExtra)
+            &nbsp;=&nbsp;<strong>@Formateos.Dinero(Model.CostoTotal)</strong>
+        </span>
+    </div>
+
+    <div class="card-body">
+        @if (Model.Receta.Count == 0)
+        {
+            <div class="alert alert-light border mb-3">
+                Este producto todavia no tiene insumos asignados. Agrega el primero abajo.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-3">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Insumo</th>
+                            <th class="text-end">Cantidad</th>
+                            <th class="text-end">Costo unitario</th>
+                            <th class="text-end">Subtotal</th>
+                            <th class="text-end"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var linea in Model.Receta)
+                        {
+                            <tr>
+                                <td>@linea.Nombre</td>
+                                <td class="text-end">@Formateos.Cantidad(linea.Cantidad) @linea.Unidad</td>
+                                <td class="text-end">@Formateos.Dinero(linea.CostoUnitario) / @linea.Unidad</td>
+                                <td class="text-end">@Formateos.Dinero(linea.Subtotal)</td>
+                                <td class="text-end">
+                                    <form asp-controller="Productos" asp-action="QuitarInsumo" asp-route-id="@producto.Id"
+                                          asp-route-insumoId="@linea.InsumoId" method="post" class="d-inline"
+                                          onsubmit="return confirm('¿Quitar @linea.Nombre de la receta?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Quitar de la receta">Quitar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @* Agregar / actualizar un insumo de la receta *@
+        <form asp-action="AgregarInsumo" asp-route-id="@producto.Id" method="post" class="row g-2 align-items-end">
+            <div class="col-md-6">
+                <label class="form-label small mb-1" for="insumoId">Insumo</label>
+                <select name="insumoId" id="insumoId" class="form-select form-select-sm" required>
+                    <option value="">Elegir insumo...</option>
+                    @foreach (var insumo in Model.InsumosDisponibles)
+                    {
+                        <option value="@insumo.Id">
+                            @insumo.Nombre (@insumo.Unidad - @Formateos.Dinero(insumo.CostoUnitario))
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small mb-1" for="cantidad">Cantidad</label>
+                <input type="number" name="cantidad" id="cantidad" class="form-control form-control-sm"
+                       min="0.0001" step="0.0001" placeholder="0" required />
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-sm btn-outline-primary w-100">Agregar a la receta</button>
+            </div>
+        </form>
+        <div class="form-text">Si el insumo ya esta en la receta, la nueva cantidad lo reemplaza.</div>
+    </div>
+</div>

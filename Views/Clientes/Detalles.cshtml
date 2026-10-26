@@ -1,0 +1,94 @@
+@model DetalleClienteViewModel
+@{
+    ViewData["Title"] = $"Cliente {Model.Cliente.Nombre}";
+    var cliente = Model.Cliente;
+    var accionCliente = cliente.Estado ? "DarDeBaja" : "Activar";
+    var textoAccion = cliente.Estado ? "Dar de baja" : "Activar";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Cliente: @cliente.Nombre @(string.IsNullOrWhiteSpace(cliente.Apellido) ? "" : cliente.Apellido)</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary">&laquo; Volver</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="card-title mb-0">@cliente.Nombre @(string.IsNullOrWhiteSpace(cliente.Apellido) ? "" : cliente.Apellido)</h5>
+                    @if (cliente.Estado)
+                    {
+                        <span class="badge text-bg-success">Activo</span>
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-secondary">Inactivo</span>
+                    }
+                </div>
+
+                <dl class="row mb-3 small">
+                    <dt class="col-5">Telefono</dt>
+                    <dd class="col-7">@(cliente.Telefono ?? "—")</dd>
+                    <dt class="col-5">Email</dt>
+                    <dd class="col-7">@(cliente.Email ?? "—")</dd>
+                    <dt class="col-5">Direccion</dt>
+                    <dd class="col-7">@(cliente.Direccion ?? "—")</dd>
+                    <dt class="col-5">Compras</dt>
+                    <dd class="col-7">@Model.Compras.Total registro(s)</dd>
+                </dl>
+
+                <div class="d-flex flex-wrap gap-2">
+                    <a asp-action="Editar" asp-route-id="@cliente.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                    <form asp-action="@accionCliente" asp-route-id="@cliente.Id" method="post"
+                          onsubmit="return confirm('¿Confirmar la accion sobre @cliente.Nombre?');">
+                        <button type="submit" class="btn btn-sm @(cliente.Estado ? "btn-outline-danger" : "btn-outline-success")">@textoAccion</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card shadow-sm h-100">
+            <div class="card-header fw-bold">Historial de compras</div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Venta</th>
+                            <th>Fecha</th>
+                            <th>Registrada por</th>
+                            <th class="text-end">Monto</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Compras.HayFilas)
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">El cliente todavia no realizo compras.</td>
+                            </tr>
+                        }
+                        @foreach (var venta in Model.Compras.Filas)
+                        {
+                            <tr>
+                                <td>#@venta.Id</td>
+                                <td>@Formateos.FechaHora(venta.Fecha)</td>
+                                <td>@venta.UsuarioNombre</td>
+                                <td class="text-end">@Formateos.Dinero(venta.MontoTotal)</td>
+                                <td class="text-end">
+                                    <a asp-controller="Ventas" asp-action="Detalles" asp-route-id="@venta.Id"
+                                       class="btn btn-sm btn-outline-secondary">Ver</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-body pt-0">
+                <partial name="_Paginacion" />
+            </div>
+        </div>
+    </div>
+</div>
