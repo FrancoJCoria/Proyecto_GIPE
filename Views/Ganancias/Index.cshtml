@@ -1,0 +1,143 @@
+@model PanelGananciasViewModel
+@{
+    ViewData["Title"] = "Panel de ganancias";
+    var nombres = Model.Productos.Filas.Select(p => p.Nombre).ToList();
+    var ganancias = Model.Productos.Filas.Select(p => p.Ganancia).ToList();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Panel de ganancias</h1>
+    <span class="text-muted small">Del @Formateos.Fecha(Model.Desde) al @Formateos.Fecha(Model.Hasta)</span>
+</div>
+
+<form method="get" class="card shadow-sm mb-3">
+    <div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label for="desde" class="form-label small mb-1">Desde</label>
+                <input type="date" id="desde" name="desde" value="@Model.Desde.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-3">
+                <label for="hasta" class="form-label small mb-1">Hasta</label>
+                <input type="date" id="hasta" name="hasta" value="@Model.Hasta.ToString("yyyy-MM-dd")" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-6">
+                <button type="submit" class="btn btn-sm btn-outline-primary">Filtrar</button>
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Mes actual</a>
+            </div>
+        </div>
+        <div asp-validation-summary="ModelOnly" class="text-danger small mt-2"></div>
+    </div>
+</form>
+
+<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5 g-3 mb-3">
+    <div class="col">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Ingresos</div>
+                <div class="fs-5 fw-bold">@Formateos.Dinero(Model.Ingresos)</div>
+                <div class="text-muted small">Total vendido</div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Costo de ventas</div>
+                <div class="fs-5 fw-bold">@Formateos.Dinero(Model.CostoVentas)</div>
+                <div class="text-muted small">Costo de lo vendido</div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Gastos</div>
+                <div class="fs-5 fw-bold">@Formateos.Dinero(Model.Gastos)</div>
+                <div class="text-muted small">Gastos registrados</div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Ganancia neta</div>
+                <div class="fs-5 fw-bold @(Model.GananciaNeta >= 0 ? "text-success" : "text-danger")">
+                    @Formateos.Dinero(Model.GananciaNeta)
+                </div>
+                <div class="text-muted small">Ingresos - costo - gastos</div>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Margen neto</div>
+                <div class="fs-5 fw-bold">@Formateos.Numero2(Model.Margen) %</div>
+                <div class="text-muted small">Ganancia neta sobre ingresos</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.Productos.HayFilas)
+{
+    <div class="card shadow-sm mb-3">
+        <div class="card-header fw-bold">Ganancia por producto</div>
+        <div class="card-body">
+            <div style="height: 300px;">
+                <canvas id="grafico-ganancias"
+                        data-nombres="@System.Text.Json.JsonSerializer.Serialize(nombres)"
+                        data-ganancias="@System.Text.Json.JsonSerializer.Serialize(ganancias)"></canvas>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-header fw-bold">Rentabilidad por producto</div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Producto</th>
+                    <th class="text-end">Cantidad vendida</th>
+                    <th class="text-end">Ingresos</th>
+                    <th class="text-end">Costo</th>
+                    <th class="text-end">Ganancia</th>
+                    <th class="text-end">Margen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Productos.HayFilas)
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">No hay ventas en el periodo elegido.</td>
+                    </tr>
+                }
+                @foreach (var producto in Model.Productos.Filas)
+                {
+                    <tr>
+                        <td>
+                            <a asp-controller="Productos" asp-action="Detalles" asp-route-id="@producto.ProductoId">@producto.Nombre</a>
+                        </td>
+                        <td class="text-end">@Formateos.Cantidad(producto.CantidadVendida)</td>
+                        <td class="text-end">@Formateos.Dinero(producto.Ingresos)</td>
+                        <td class="text-end">@Formateos.Dinero(producto.Costo)</td>
+                        <td class="text-end fw-bold @(producto.Ganancia >= 0 ? "text-success" : "text-danger")">
+                            @Formateos.Dinero(producto.Ganancia)
+                        </td>
+                        <td class="text-end">@Formateos.Numero2(producto.Margen) %</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<partial name="_Paginacion" />
+
+@section Scripts {
+    <script src="~/lib/chart.js/dist/chart.umd.js"></script>
+    <script src="~/js/ganancias.js" asp-append-version="true"></script>
+}
