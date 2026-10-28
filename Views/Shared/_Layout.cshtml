@@ -1,5 +1,7 @@
 ﻿@{
     var usuarioAutenticado = User.Identity?.IsAuthenticated == true;
+    // El url del avatar viaja en la cookie como claim; lo refresca Account/ActualizarAvatar.
+    var avatarUsuario = usuarioAutenticado ? User.FindFirst("GIPE.Avatar")?.Value : null;
 }
 <!DOCTYPE html>
 <html lang="es">
@@ -66,7 +68,15 @@
                         @if (usuarioAutenticado)
                         {
                             <li class="nav-item">
-                                <span class="navbar-text me-sm-3">@User.Identity?.Name</span>
+                                <a asp-controller="Account" asp-action="Perfil" class="d-flex align-items-center text-decoration-none"
+                                   title="Mi perfil">
+                                    @if (!string.IsNullOrWhiteSpace(avatarUsuario))
+                                    {
+                                        <img src="@avatarUsuario" alt="Avatar de @User.Identity?.Name"
+                                             class="rounded-circle border me-2" style="width: 32px; height: 32px; object-fit: cover;" />
+                                    }
+                                    <span class="navbar-text me-sm-3">@User.Identity?.Name</span>
+                                </a>
                             </li>
                             <li class="nav-item">
                                 <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">

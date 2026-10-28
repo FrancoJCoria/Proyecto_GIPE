@@ -50,3 +50,6 @@ appsettings.Production.json
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Imagenes subidas por los usuarios en runtime (avatares y productos)
+wwwroot/Uploads/

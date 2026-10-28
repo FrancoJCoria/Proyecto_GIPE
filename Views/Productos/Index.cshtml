@@ -30,6 +30,7 @@
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
                 <tr>
+                    <th>Foto</th>
                     <th>Nombre</th>
                     <th class="text-end">Precio</th>
                     <th class="text-end">Stock</th>
@@ -41,12 +42,24 @@
                 @if (!Model.HayFilas)
                 {
                     <tr>
-                        <td colspan="5" class="text-center text-muted py-4">No hay productos que coincidan con la busqueda.</td>
+                        <td colspan="6" class="text-center text-muted py-4">No hay productos que coincidan con la busqueda.</td>
                     </tr>
                 }
                 @foreach (var producto in Model.Filas)
                 {
                     <tr class="@(producto.Estado ? "" : "table-secondary")">
+                        <td style="width: 56px;">
+                            @if (!string.IsNullOrWhiteSpace(producto.UrlProducto))
+                            {
+                                <img src="@producto.UrlProducto" alt="Imagen de @producto.Nombre"
+                                     class="rounded" style="width: 44px; height: 44px; object-fit: cover;" />
+                            }
+                            else
+                            {
+                                <div class="rounded bg-light text-secondary d-flex align-items-center justify-content-center"
+                                     style="width: 44px; height: 44px;">?</div>
+                            }
+                        </td>
                         <td>@producto.Nombre</td>
                         <td class="text-end">@Formateos.Dinero(producto.PrecioActual)</td>
                         <td class="text-end @(producto.StockActual <= 0 ? "text-danger fw-bold" : "")">

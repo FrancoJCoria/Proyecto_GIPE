@@ -19,15 +19,18 @@ public class ProductosController : Controller
     private readonly IRepositorioProducto _repositorioProducto;
     private readonly IRepositorioInsumo _repositorioInsumo;
     private readonly ServicioCalculadora _servicioCalculadora;
+    private readonly ServicioImagenes _servicioImagenes;
 
     public ProductosController(
         IRepositorioProducto repositorioProducto,
         IRepositorioInsumo repositorioInsumo,
-        ServicioCalculadora servicioCalculadora)
+        ServicioCalculadora servicioCalculadora,
+        ServicioImagenes servicioImagenes)
     {
         _repositorioProducto = repositorioProducto;
         _repositorioInsumo = repositorioInsumo;
         _servicioCalculadora = servicioCalculadora;
+        _servicioImagenes = servicioImagenes;
     }
 
     //------------------------------------------------------------LISTADO PAGINADO --------------------------------------------------------
@@ -53,7 +56,7 @@ public class ProductosController : Controller
     [HttpPost]
     [Authorize(Policy = "Dueno")]
     [ValidateAntiForgeryToken]
-    public IActionResult Crear(Producto producto)
+    public IActionResult Crear(Producto producto, IFormFile? archivoProducto)
     {
         if (!ModelState.IsValid)
         {
@@ -68,6 +71,25 @@ public class ProductosController : Controller
         {
             ModelState.AddModelError(string.Empty, "No se pudo crear el producto.");
             return View(producto);
+        }
+
+        if (archivoProducto is not null && archivoProducto.Length > 0)
+        {
+            try
+            {
+                var urlNueva = _servicioImagenes.Guardar(archivoProducto, "Productos", null);
+
+                if (urlNueva is not null)
+                {
+                    producto.Id = id;
+                    producto.UrlProducto = urlNueva;
+                    _repositorioProducto.ActualizarProducto(producto);
+                }
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["Error"] = $"El producto se creo, pero no se pudo guardar la imagen: {ex.Message}";
+            }
         }
 
         TempData["Exito"] = $"Producto '{producto.Nombre}' creado correctamente.";
@@ -96,7 +118,7 @@ public class ProductosController : Controller
     [HttpPost]
     [Authorize(Policy = "Dueno")]
     [ValidateAntiForgeryToken]
-    public IActionResult Editar(int id, Producto producto)
+    public IActionResult Editar(int id, Producto producto, IFormFile? archivoProducto)
     {
         if (id != producto.Id)
         {
@@ -109,16 +131,59 @@ public class ProductosController : Controller
             return View(producto);
         }
 
+        // La url vigente puede ser distinta a la que viene del form si van a subir
+        // archivo; se necesita para borrar el archivo local anterior.
+        var productoOriginal = _repositorioProducto.ObtenerPorId(id);
+
+        if (productoOriginal is null)
+        {
+            return NoExiste();
+        }
+
+        var urlAnterior = productoOriginal.UrlProducto;
+
+        if (archivoProducto is not null && archivoProducto.Length > 0)
+        {
+            try
+            {
+                // Guardar ya se encarga de borrar la imagen local anterior si la habia.
+                var urlNueva = _servicioImagenes.Guardar(archivoProducto, "Productos", urlAnterior);
+
+                if (urlNueva is not null)
+                {
+                    producto.UrlProducto = urlNueva;
+                }
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(nameof(producto.UrlProducto), ex.Message);
+                return View(RecargarVistaEditar(producto));
+            }
+        }
+        else if (producto.UrlProducto != urlAnterior)
+        {
+            // Se limpio o cambio la url sin subir archivo; si la vieja era local se borra.
+            _servicioImagenes.BorrarSiLocal("Productos", urlAnterior);
+        }
+
         producto.Nombre = producto.Nombre.Trim();
 
         if (!_repositorioProducto.ActualizarProducto(producto))
         {
             ModelState.AddModelError(string.Empty, "No se pudo actualizar el producto.");
-            return View(producto);
+            return View(RecargarVistaEditar(producto));
         }
 
         TempData["Exito"] = $"Producto '{producto.Nombre}' actualizado correctamente.";
         return RedirectToAction(nameof(Detalles), new { id });
+    }
+
+    // Recarga los datos de la vista de edicion cuando hay que volver a mostrarla.
+    private IActionResult RecargarVistaEditar(Producto producto)
+    {
+        var costoTotal = _repositorioProducto.ObtenerCostoProducto(producto.Id) ?? producto.CostoExtra;
+        ViewBag.CostoInsumos = ServicioCalculadora.Redondear2(costoTotal - producto.CostoExtra);
+        return View(producto);
     }
 
     //------------------------------------------------------------DETALLES (FICHA + RECETA) --------------------------------------------------------

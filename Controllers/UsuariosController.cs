@@ -6,6 +6,7 @@ using Proyecto_GIPE.Models.DTOs.Usuarios;
 using Proyecto_GIPE.Models.Entities;
 using Proyecto_GIPE.Models.Enums;
 using Proyecto_GIPE.Models.IRepositorios;
+using Proyecto_GIPE.Models.Servicios;
 using Proyecto_GIPE.ViewModels;
 
 namespace Proyecto_GIPE.Controllers;
@@ -18,11 +19,15 @@ public class UsuariosController : Controller
 
     public UsuariosController(
         IRepositorioUsuario repositorioUsuario,
-        IPasswordHasher<Usuario> passwordHasher)
+        IPasswordHasher<Usuario> passwordHasher,
+        ServicioImagenes servicioImagenes)
     {
         _repositorioUsuario = repositorioUsuario;
         _passwordHasher = passwordHasher;
+        _servicioImagenes = servicioImagenes;
     }
+
+    private readonly ServicioImagenes _servicioImagenes;
 
     [HttpGet]
     public IActionResult Index()
@@ -55,7 +60,7 @@ public class UsuariosController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Crear(UsuarioFormViewModel model)
+    public IActionResult Crear(UsuarioFormViewModel model, IFormFile? archivoAvatar)
     {
         ValidarPasswordObligatoria(model);
 
@@ -99,6 +104,7 @@ public class UsuariosController : Controller
         }
 
         TempData["Mensaje"] = "Usuario creado correctamente.";
+        GuardarAvatarSiCorresponde(idCreado, archivoAvatar, null);
         return RedirectToAction(nameof(Index));
     }
 
@@ -125,7 +131,7 @@ public class UsuariosController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Editar(int id, UsuarioFormViewModel model)
+    public IActionResult Editar(int id, UsuarioFormViewModel model, IFormFile? archivoAvatar)
     {
         if (id != model.Id)
         {
@@ -181,6 +187,7 @@ public class UsuariosController : Controller
             return View(model);
         }
 
+        var avatarAnterior = usuario.Url_avatar;
         usuario.Nombre = model.Nombre.Trim();
         usuario.Email = email;
         usuario.Rol = model.Rol;
@@ -198,6 +205,19 @@ public class UsuariosController : Controller
         {
             ModelState.AddModelError(string.Empty, "No se pudo actualizar el usuario.");
             return View(model);
+        }
+
+        // Si subieron archivo, gana sobre la url; "Guardar" ya borro la imagen local anterior.
+        if (archivoAvatar is not null && archivoAvatar.Length > 0)
+        {
+            GuardarAvatarSiCorresponde(id, archivoAvatar, avatarAnterior);
+        }
+        else if (string.IsNullOrWhiteSpace(model.Url_avatar) &&
+                 !string.IsNullOrWhiteSpace(avatarAnterior))
+        {
+            // Se limpio la referencia del avatar (o venia de un archivo local): si era
+            // local se borra fisicamente para no dejar archivos huerfanos.
+            _servicioImagenes.BorrarSiLocal("Avatares", avatarAnterior);
         }
 
         TempData["Mensaje"] = "Usuario actualizado correctamente.";
@@ -235,6 +255,37 @@ public class UsuariosController : Controller
             : "Usuario activado correctamente.";
 
         return RedirectToAction(nameof(Index));
+    }
+
+    /// <summary>
+    /// Sube la foto de avatar si vino archivo. Guarda el archivo fisico con
+    /// ServicioImagenes (borrando el anterior si era local) y persiste la url
+    /// con EditarAvatarUsuario. En error informa con TempData sin cortar el flujo.
+    /// </summary>
+    private void GuardarAvatarSiCorresponde(int id, IFormFile? archivo, string? urlAnterior)
+    {
+        if (archivo is null || archivo.Length == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            var urlNueva = _servicioImagenes.Guardar(archivo, "Avatares", urlAnterior);
+
+            if (urlNueva is not null && _repositorioUsuario.EditarAvatarUsuario(id, urlNueva) is not null)
+            {
+                TempData["Mensaje"] = "Foto de perfil guardada.";
+            }
+            else
+            {
+                TempData["Error"] = "No se pudo asociar la foto al usuario.";
+            }
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["Error"] = ex.Message;
+        }
     }
 
     private void ValidarPasswordObligatoria(UsuarioFormViewModel model)

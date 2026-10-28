@@ -38,6 +38,22 @@
     <span asp-validation-for="Url_avatar" class="text-danger"></span>
 </div>
 
+<div class="mb-3">
+    <label for="archivoAvatar" class="form-label">Foto de perfil</label>
+    @if (!string.IsNullOrWhiteSpace(Model.Url_avatar))
+    {
+        <div class="mb-2">
+            <img src="@Model.Url_avatar" alt="Avatar de @Model.Nombre"
+                 class="rounded-circle border" style="width: 64px; height: 64px; object-fit: cover;" />
+        </div>
+    }
+    <input type="file" id="archivoAvatar" name="archivoAvatar" accept=".jpg,.jpeg,.png,.webp" class="form-control" />
+    <div class="form-text">
+        JPG, PNG o WEBP, maximo 5 MB. Si subis una foto, reemplaza a la URL de arriba.
+        Igual que inmobiliariaULP: la imagen se guarda en wwwroot/Uploads/Avatares.
+    </div>
+</div>
+
 <div class="form-check mb-3">
     <input asp-for="Estado" class="form-check-input" />
     <label asp-for="Estado" class="form-check-label"></label>

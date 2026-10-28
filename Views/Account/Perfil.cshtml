@@ -13,6 +13,53 @@
     }
 </div>
 
+<div class="card shadow-sm mb-3">
+    <div class="card-body d-flex align-items-center gap-4">
+        @if (!string.IsNullOrWhiteSpace(Model.Url_avatar))
+        {
+            <img src="@Model.Url_avatar" alt="Foto de perfil de @Model.Nombre"
+                 class="rounded-circle border" style="width: 96px; height: 96px; object-fit: cover;" />
+        }
+        else
+        {
+            <div class="rounded-circle border bg-light d-flex align-items-center justify-content-center"
+                 style="width: 96px; height: 96px;">
+                <span class="display-6 text-secondary mb-0">@Model.Nombre.Trim().Substring(0, 1).ToUpperInvariant()</span>
+            </div>
+        }
+
+        <div class="flex-grow-1">
+            <h5 class="mb-1">@Model.Nombre</h5>
+            <div class="text-muted small mb-2">@Model.Email</div>
+            <span class="badge @(Model.Rol == RolUsuario.Dueno ? "bg-primary" : "bg-info text-dark")">
+                @(Model.Rol == RolUsuario.Dueno ? "Dueño" : "Empleado")
+            </span>
+            <span class="badge @(Model.Estado ? "bg-success" : "bg-secondary")">@(Model.Estado ? "Activo" : "Inactivo")</span>
+        </div>
+
+        <div>
+            <form asp-controller="Account" asp-action="ActualizarAvatar" method="post"
+                  enctype="multipart/form-data" class="d-flex flex-column gap-2">
+                <div class="input-group input-group-sm">
+                    <input type="file" name="archivoAvatar" accept=".jpg,.jpeg,.png,.webp"
+                           class="form-control" aria-label="Elegir foto de perfil" />
+                    <button type="submit" class="btn btn-primary">Subir foto</button>
+                </div>
+                <div class="form-text">JPG, PNG o WEBP, maximo 5 MB.</div>
+            </form>
+            @if (!string.IsNullOrWhiteSpace(Model.Url_avatar))
+            {
+                <form asp-controller="Account" asp-action="QuitarAvatar" method="post" class="mt-2">
+                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                            onclick="return confirm('¿Quitar la foto de perfil?');">
+                        Quitar foto
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+
 <div class="card shadow-sm">
     <div class="card-body">
         <dl class="row mb-0">
@@ -21,10 +68,9 @@
 
             <dt class="col-sm-3">Correo</dt>
             <dd class="col-sm-9">@Model.Email</dd>
+
             <dt class="col-sm-3">Rol</dt>
-            <dd class="col-sm-9">@(Model.Rol == RolUsuario.Dueno ? "Dueño" : "Empleado")
-                
-            </dd>
+            <dd class="col-sm-9">@(Model.Rol == RolUsuario.Dueno ? "Dueño" : "Empleado")</dd>
 
             <dt class="col-sm-3">Estado</dt>
             <dd class="col-sm-9">

@@ -45,6 +45,7 @@ builder.Services.AddScoped<IRepositorioVenta, RepositorioVenta>();
 builder.Services.AddScoped<IRepositorioGanancia, RepositorioGanancia>();
 builder.Services.AddScoped<IServicioUsuarioActual, ServicioUsuarioActual>();
 builder.Services.AddScoped<ServicioCalculadora>();
+builder.Services.AddScoped<ServicioImagenes>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IPasswordHasher<Usuario>, PasswordHasher<Usuario>>();
 builder.Services.AddScoped<ServicioSeed>();
