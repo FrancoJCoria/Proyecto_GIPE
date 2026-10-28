@@ -56,6 +56,12 @@
                             @if (User.IsInRole("Dueno"))
                             {
                                 <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="Clientes" asp-action="Vue">ABM Vue</a>
+                                </li>
+                            }
+                            @if (User.IsInRole("Dueno"))
+                            {
+                                <li class="nav-item">
                                     <a class="nav-link text-dark" asp-controller="Usuarios" asp-action="Index">Usuarios</a>
                                 </li>
                             }

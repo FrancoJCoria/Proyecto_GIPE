@@ -21,6 +21,42 @@ public class ClientesController : Controller
         _repositorioCliente = repositorioCliente;
     }
 
+    //------------------------------------------------------------BUSQUEDA ASINCRONA (SELECT2 + AJAX) --------------------------------------------------------
+    // Endpoint JSON para el select2 de ventas: el desplegable consulta al
+    // servidor a medida que se escribe (ajax), sin cargar todos los clientes.
+    [HttpGet]
+    public IActionResult Buscar(string? term)
+    {
+        var termino = (term ?? string.Empty).Trim();
+
+        var resultados = _repositorioCliente.ObtenerActivos()
+            .Where(cliente => termino.Length == 0
+                || cliente.Nombre.Contains(termino, StringComparison.OrdinalIgnoreCase)
+                || (cliente.Apellido?.Contains(termino, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (cliente.Email?.Contains(termino, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (cliente.Telefono?.Contains(termino, StringComparison.OrdinalIgnoreCase) ?? false))
+            .OrderBy(cliente => cliente.Nombre)
+            .Take(20)
+            .Select(cliente => new
+            {
+                id = cliente.Id,
+                text = cliente.Nombre
+                    + (string.IsNullOrWhiteSpace(cliente.Apellido) ? "" : " " + cliente.Apellido)
+                    + (string.IsNullOrWhiteSpace(cliente.Email) ? "" : $" ({cliente.Email})")
+            });
+
+        return Ok(new { results = resultados });
+    }
+
+    //------------------------------------------------------------ABM EN VUE + JWT --------------------------------------------------------
+    // Pantalla demo donde el ABM de clientes esta armado con Vue 3 y consume
+    // la Web API con JWT (/api/clientes en Controllers/Api/ClientesController).
+    [HttpGet]
+    public IActionResult Vue()
+    {
+        return View();
+    }
+
     //------------------------------------------------------------LISTADO PAGINADO --------------------------------------------------------
     public IActionResult Index(int pagina = 1, string? busqueda = null)
     {

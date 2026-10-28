@@ -83,16 +83,24 @@
                 <div class="card-header fw-bold">Cliente</div>
                 <div class="card-body">
                     <label class="form-label small mb-1" for="ClienteId">Cliente (opcional)</label>
-                    <select asp-for="ClienteId" class="form-select">
+                    <select asp-for="ClienteId" class="form-select js-cliente" data-select2-ajax="true">
                         <option value="">Sin cliente (venta mostrador)</option>
-                        @foreach (var cliente in clientes)
+                        @* El resto de opciones llega por AJAX desde /Clientes/Buscar al tipear.
+                           Solo se renderiza de antemano el cliente elegido, para que un POST
+                           con error de validacion no pierda la seleccion. *@
+                        @if (Model.ClienteId is > 0)
                         {
-                            <option value="@cliente.Id" selected="@(Model.ClienteId == cliente.Id)">
-                                @(cliente.Nombre + (string.IsNullOrWhiteSpace(cliente.Apellido) ? "" : " " + cliente.Apellido))
-                            </option>
+                            var clienteElegido = clientes.FirstOrDefault(c => c.Id == Model.ClienteId);
+
+                            if (clienteElegido is not null)
+                            {
+                                <option value="@clienteElegido.Id" selected>
+                                    @(clienteElegido.Nombre + (string.IsNullOrWhiteSpace(clienteElegido.Apellido) ? "" : " " + clienteElegido.Apellido))
+                                </option>
+                            }
                         }
                     </select>
-                    <div class="form-text mt-2">Los clientes se crean desde el menu Clientes.</div>
+                    <div class="form-text mt-2">Busca por nombre, apellido, correo o telefono mientras escribís.</div>
 
                     <hr />
 

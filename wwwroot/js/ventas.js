@@ -33,6 +33,33 @@
                 $select.select2(opcionesSelect2());
             }
         });
+
+        // Cliente con busqueda AJAX: consulta /Clientes/Buscar a medida que se escribe.
+        $contexto.find(".js-cliente").each(function () {
+            var $select = $(this);
+            if ($select.data("select2")) {
+                return;
+            }
+            if ($.fn && $.fn.select2) {
+                $select.select2({
+                    placeholder: "Buscar cliente ( AJAX )...",
+                    allowClear: true,
+                    minimumInputLength: 2,
+                    width: "100%",
+                    ajax: {
+                        url: "/Clientes/Buscar",
+                        dataType: "json",
+                        delay: 250,
+                        data: function (params) {
+                            return { term: params.term };
+                        },
+                        processResults: function (data) {
+                            return data; // formato select2: { results: [ {id, text} ] }
+                        }
+                    }
+                });
+            }
+        });
     }
 
     function leerNumero($elemento) {
@@ -150,7 +177,8 @@
     });
 
     //------ arranque ------
-    iniciarSelect2($contenedor);
+    // El select de cliente esta fuera de los items: se pasa $(document) para cubrirlo.
+    iniciarSelect2($(document));
     renumerar();
     $contenedor.find(".fila-item").each(function () {
         actualizarFila($(this));

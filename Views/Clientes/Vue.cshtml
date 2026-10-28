@@ -1,0 +1,17 @@
+@{
+    ViewData["Title"] = "ABM de clientes (Vue)";
+}
+
+<h1 class="h3 mb-1">ABM de clientes con Vue.js</h1>
+<p class="text-muted small mb-3">
+    Pantalla armada con <strong>Vue 3</strong> que se comunica por AJAX con la
+    <strong>Web API + JWT</strong> (login en <code>/api/auth/login</code>, ABM en
+    <code>/api/clientes</code>). El mismo backend REST ya usado por Postman.
+</p>
+
+<div id="app-vue"></div>
+
+@section Scripts {
+    <script src="~/lib/vue/vue.global.prod.js" asp-append-version="true"></script>
+    <script src="~/js/clientes-vue.js" asp-append-version="true"></script>
+}
