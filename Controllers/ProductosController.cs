@@ -11,6 +11,7 @@ namespace Proyecto_GIPE.Controllers;
 // Ambos roles consultan el listado y la ficha; los cambios de maestro
 // (altas, stock y receta) quedan reservados al Dueno.
 [Authorize]
+
 public class ProductosController : Controller
 {
     private const int TamanoPagina = 10;
