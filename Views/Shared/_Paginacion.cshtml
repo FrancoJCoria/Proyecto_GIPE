@@ -15,25 +15,41 @@
         int fin = Math.Min(paginacion.TotalPaginas, inicio + 6);
         inicio = Math.Max(1, fin - 6);
 
+        // Se genera la url con Url.Action en lugar de los tag helpers (asp-action/asp-controller):
+        // pasar asp-controller con valor explicito null rompia la generacion y producia
+        // enlaces a "/" (home) en lugar del listado paginado real.
+        var urlPara = new Func<int, string>(pagina =>
+            Url.Action(paginacion.Accion, paginacion.Controlador, rotasPara(pagina)) ?? "#");
+
+        int paginaAnterior = Math.Max(1, paginacion.Pagina - 1);
+        int paginaSiguiente = Math.Min(paginacion.TotalPaginas, paginacion.Pagina + 1);
+
         if (paginacion.TotalPaginas > 1)
         {
             <nav aria-label="Paginado" class="mt-3">
                 <ul class="pagination justify-content-center mb-0">
                     <li class="page-item @(paginacion.Pagina == 1 ? "disabled" : "")">
-                        <a class="page-link" asp-action="@paginacion.Accion" asp-controller="@paginacion.Controlador" asp-all-route-data="rotasPara(1)">&laquo;</a>
+                        <a class="page-link" href="@urlPara(1)" title="Primera">&laquo;</a>
+                    </li>
+                    <li class="page-item @(paginacion.Pagina == 1 ? "disabled" : "")">
+                        <a class="page-link" href="@urlPara(paginaAnterior)" title="Anterior">&lsaquo;</a>
                     </li>
 
                     @for (var numero = inicio; numero <= fin; numero++)
                     {
-                        <li class="page-item @(numero == paginacion.Pagina ? "active" : "")">
-                            <a class="page-link" asp-action="@paginacion.Accion" asp-controller="@paginacion.Controlador" asp-all-route-data="rotasPara(numero)">@numero</a>
+                        <li class="page-item @(numero == paginacion.Pagina ? "active" : "")" @(numero == paginacion.Pagina ? @"aria-current=""page""" : null)>
+                            <a class="page-link" href="@urlPara(numero)">@numero</a>
                         </li>
                     }
 
                     <li class="page-item @(paginacion.Pagina == paginacion.TotalPaginas ? "disabled" : "")">
-                        <a class="page-link" asp-action="@paginacion.Accion" asp-controller="@paginacion.Controlador" asp-all-route-data="rotasPara(paginacion.TotalPaginas)">&raquo;</a>
+                        <a class="page-link" href="@urlPara(paginaSiguiente)" title="Siguiente">&rsaquo;</a>
+                    </li>
+                    <li class="page-item @(paginacion.Pagina == paginacion.TotalPaginas ? "disabled" : "")">
+                        <a class="page-link" href="@urlPara(paginacion.TotalPaginas)" title="Última">&raquo;</a>
                     </li>
                 </ul>
+                <p class="text-center text-muted mt-2 mb-0">Página @paginacion.Pagina de @paginacion.TotalPaginas</p>
             </nav>
         }
     }
