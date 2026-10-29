@@ -27,7 +27,4 @@ public class ProductoDetalleViewModel
 
     /// <summary>Ganancia unitaria: precio vigente menos costo total.</summary>
     public decimal GananciaUnitaria { get; set; }
-
-    /// <summary>Insumos activos que se pueden agregar a la receta.</summary>
-    public IList<Insumo> InsumosDisponibles { get; set; } = [];
 }

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Proyecto_GIPE.Models.Comunes;
+using Proyecto_GIPE.Models.Entities;
 using Proyecto_GIPE.Models.Excepciones;
 using Proyecto_GIPE.Models.IRepositorios;
 using Proyecto_GIPE.Models.Servicios;
@@ -47,7 +48,7 @@ public class VentasController : Controller
     public IActionResult Crear()
     {
         var modelo = new VentaCrearViewModel();
-        CargarSelects(modelo);
+        CargarSeleccionPrevia(modelo);
         return View(modelo);
     }
 
@@ -85,7 +86,7 @@ public class VentasController : Controller
 
         if (!ModelState.IsValid)
         {
-            CargarSelects(modelo);
+            CargarSeleccionPrevia(modelo);
             return View(modelo);
         }
 
@@ -104,7 +105,7 @@ public class VentasController : Controller
             // Producto/cliente inexistente o stock insuficiente: se muestran los items cargados
             // para que el usuario corrija sin perder el formulario.
             ModelState.AddModelError(string.Empty, e.Message);
-            CargarSelects(modelo);
+            CargarSeleccionPrevia(modelo);
             return View(modelo);
         }
     }
@@ -131,9 +132,39 @@ public class VentasController : Controller
     }
 
     //------------------------------------------------------------FUNCIONES --------------------------------------------------------
-    private void CargarSelects(VentaCrearViewModel modelo)
+    /// <summary>
+    /// Reemplaza al viejo precargado de ViewBag: los desplegables de producto y cliente
+    /// se llenan con busqueda asincrona (Select2 + AJAX contra la API), asi no se envian
+    /// todos los registros de la base al formulario. Aca solo se prepara:
+    /// - el aviso de "no hay productos activos" con un COUNT liviano (pagina de 1 registro);
+    /// - unica opcion inicial para las entidades ya elegidas (re-render tras un envio fallido),
+    ///   para que Select2 muestre la seleccion conservada sin precargar el resto.
+    /// </summary>
+    private void CargarSeleccionPrevia(VentaCrearViewModel modelo)
     {
-        ViewBag.Clientes = _repositorioCliente.ObtenerActivos();
-        ViewBag.Productos = _repositorioProducto.ObtenerActivos();
+        ViewBag.TotalProductosActivos = _repositorioProducto
+            .ObtenerTodos(1, 1, null, soloActivos: true)
+            .Total;
+
+        var productosPrevios = new Dictionary<int, Producto>();
+
+        foreach (var item in modelo.Items)
+        {
+            if (item?.ProductoId is int productoId && productoId > 0 && !productosPrevios.ContainsKey(productoId))
+            {
+                Producto? producto = _repositorioProducto.ObtenerPorId(productoId);
+
+                if (producto is not null)
+                {
+                    productosPrevios[productoId] = producto;
+                }
+            }
+        }
+
+        ViewBag.ProductosPrevios = productosPrevios;
+
+        ViewBag.ClientePrevia = modelo.ClienteId is int clienteId && clienteId > 0
+            ? _repositorioCliente.ObtenerPorId(clienteId)
+            : null;
     }
 }

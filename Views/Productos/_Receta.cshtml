@@ -60,14 +60,10 @@
         <form asp-action="AgregarInsumo" asp-route-id="@producto.Id" method="post" class="row g-2 align-items-end">
             <div class="col-md-6">
                 <label class="form-label small mb-1" for="insumoId">Insumo</label>
+                @* Select vacio: receta.js lo convierte en buscador asincrono (Select2 + /api/insumos);
+                   nunca se llenan las opciones con todos los insumos de la base. *@
                 <select name="insumoId" id="insumoId" class="form-select form-select-sm" required>
-                    <option value="">Elegir insumo...</option>
-                    @foreach (var insumo in Model.InsumosDisponibles)
-                    {
-                        <option value="@insumo.Id">
-                            @insumo.Nombre (@insumo.Unidad - @Formateos.Dinero(insumo.CostoUnitario))
-                        </option>
-                    }
+                    <option value="">Buscar insumo...</option>
                 </select>
             </div>
             <div class="col-md-3">

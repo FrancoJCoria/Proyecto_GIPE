@@ -1,9 +1,13 @@
 @model VentaCrearViewModel
 @{
     ViewData["Title"] = "Nueva venta";
-    var clientes = (IList<Cliente>?)ViewBag.Clientes ?? [];
-    var productos = (IList<Producto>?)ViewBag.Productos ?? [];
-    var hayProductos = productos.Count > 0;
+    // Solo un contador liviano para el aviso y las entidades ya elegidas (envio fallido).
+    // Las listas completas NO se precargan: producto y cliente se buscan asincronamente
+    // via AJAX (Select2) contra /api/productos y /api/clientes.
+    var totalProductosActivos = (int)(ViewBag.TotalProductosActivos ?? 0);
+    var hayProductos = totalProductosActivos > 0;
+    var productosPrevios = (Dictionary<int, Producto>?)ViewBag.ProductosPrevios ?? new Dictionary<int, Producto>();
+    var clientePrevia = (Cliente?)ViewBag.ClientePrevia;
 }
 
 <link rel="stylesheet" href="~/lib/select2/dist/css/select2.min.css" asp-append-version="true" />
@@ -37,15 +41,18 @@
                                 var item = Model.Items[i];
                                 <div class="row g-2 fila-item align-items-center py-2 border-bottom">
                                     <div class="col-md-6">
+                                        @* Select vacio: ventas.js lo convierte en buscador asincrono
+                                           (Select2 + AJAX contra /api/productos). Solo se precarga la
+                                           opcion ya elegida si el formulario se vuelve a mostrar
+                                           despues de un error de validacion. *@
                                         <select name="Items[@i].ProductoId" data-vinculo="ProductoId" class="form-select js-producto">
                                             <option value="">Elegir producto...</option>
-                                            @foreach (var producto in productos)
+                                            @if (item.ProductoId is int productoPrevioId && productosPrevios.TryGetValue(productoPrevioId, out var productoPrevio))
                                             {
-                                                <option value="@producto.Id"
-                                                        data-precio="@producto.PrecioActual.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
-                                                        data-stock="@producto.StockActual.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
-                                                        selected="@(item.ProductoId == producto.Id)">
-                                                    @producto.Nombre - @Formateos.Dinero(producto.PrecioActual) - stock: @Formateos.Cantidad(producto.StockActual)
+                                                <option value="@productoPrevio.Id" selected
+                                                        data-precio="@productoPrevio.PrecioActual.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
+                                                        data-stock="@productoPrevio.StockActual.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)">
+                                                    @productoPrevio.Nombre - @Formateos.Dinero(productoPrevio.PrecioActual) - stock: @Formateos.Cantidad(productoPrevio.StockActual)
                                                 </option>
                                             }
                                         </select>
@@ -83,13 +90,16 @@
                 <div class="card-header fw-bold">Cliente</div>
                 <div class="card-body">
                     <label class="form-label small mb-1" for="ClienteId">Cliente (opcional)</label>
-                    <select asp-for="ClienteId" class="form-select">
+                    @* Busqueda asincrona: ventas.js conecta este select con /api/clientes
+                       (Select2 + AJAX); solo llega la opcion ya elegida en un re-render. *@
+                    <select asp-for="ClienteId" class="form-select js-cliente">
                         <option value="">Sin cliente (venta mostrador)</option>
-                        @foreach (var cliente in clientes)
+                        @if (clientePrevia is not null && Model.ClienteId == clientePrevia.Id)
                         {
-                            <option value="@cliente.Id" selected="@(Model.ClienteId == cliente.Id)">
-                                @(cliente.Nombre + (string.IsNullOrWhiteSpace(cliente.Apellido) ? "" : " " + cliente.Apellido))
-                            </option>
+                            var textoCliente = clientePrevia.Nombre
+                                + (string.IsNullOrWhiteSpace(clientePrevia.Apellido) ? "" : " " + clientePrevia.Apellido);
+
+                            <option value="@clientePrevia.Id" selected>@textoCliente</option>
                         }
                     </select>
                     <div class="form-text mt-2">Los clientes se crean desde el menu Clientes.</div>
