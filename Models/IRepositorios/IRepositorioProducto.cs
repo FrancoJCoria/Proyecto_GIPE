@@ -6,8 +6,8 @@ namespace Proyecto_GIPE.Models.IRepositorios;
 
 public interface IRepositorioProducto
 {
-    /// <summary>Listado paginado con busqueda opcional por nombre.</summary>
-    ResultadoPaginado<Producto> ObtenerTodos(int pagina, int tamano, string? busqueda = null);
+    /// <summary>Listado paginado con busqueda opcional por nombre. Con soloActivos filtra la columna estado.</summary>
+    ResultadoPaginado<Producto> ObtenerTodos(int pagina, int tamano, string? busqueda = null, bool soloActivos = false);
 
     /// <summary>Productos activos, ordenados por nombre (para el desplegable de ventas).</summary>
     IList<Producto> ObtenerActivos();

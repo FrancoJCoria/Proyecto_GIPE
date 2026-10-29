@@ -5,8 +5,8 @@ namespace Proyecto_GIPE.Models.IRepositorios;
 
 public interface IRepositorioInsumo
 {
-    /// <summary>Listado paginado con busqueda opcional por nombre.</summary>
-    ResultadoPaginado<Insumo> ObtenerTodos(int pagina, int tamano, string? busqueda = null);
+    /// <summary>Listado paginado con busqueda opcional por nombre. Con soloActivos filtra la columna estado.</summary>
+    ResultadoPaginado<Insumo> ObtenerTodos(int pagina, int tamano, string? busqueda = null, bool soloActivos = false);
 
     /// <summary>Insumos activos, ordenados por nombre (para las recetas de productos).</summary>
     IList<Insumo> ObtenerActivos();

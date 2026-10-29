@@ -326,19 +326,15 @@ public class ProductosController : Controller
         return Json(calculo);
     }
 
-    //------------------------------------------------------------BUSQUEDA JSON (PARA SELECT2 EN VENTAS) --------------------------------------------------------    [HttpGet("Productos/BuscarJson")]
+    //------------------------------------------------------------BUSQUEDA JSON (PARA SELECT2 EN VENTAS) --------------------------------------------------------
+    // Busqueda para Select2: el servidor filtra por nombre con LIMIT; nunca se llenan
+    // los desplegables con todos los registros de la base.
+    [HttpGet("Productos/BuscarJson")]
     public IActionResult BuscarJson(string term)
     {
-        var productos = _repositorioProducto.ObtenerActivos();
+        var resultado = _repositorioProducto.ObtenerTodos(1, 25, term, soloActivos: true);
 
-        if (!string.IsNullOrWhiteSpace(term))
-        {
-            productos = productos
-                .Where(p => p.Nombre.Contains(term.Trim(), StringComparison.OrdinalIgnoreCase))
-                .ToList();
-        }
-
-        var items = productos.Take(25).Select(p => new
+        var items = resultado.Filas.Select(p => new
         {
             id = p.Id,
             text = $"{p.Nombre} - {Formateos.Dinero(p.PrecioActual)} - stock: {Formateos.Cantidad(p.StockActual)}",
@@ -379,8 +375,9 @@ public class ProductosController : Controller
             CostoTotal = calculo.CostoTotal,
             PrecioSugerido = calculo.PrecioSugerido,
             MargenActual = calculo.MargenActual,
-            GananciaUnitaria = calculo.GananciaUnitaria,
-            InsumosDisponibles = _repositorioInsumo.ObtenerActivos()
+            GananciaUnitaria = calculo.GananciaUnitaria
+            // Los insumos disponibles ya no se precargan: el desplegable de la receta
+            // los busca asincronamente contra /api/insumos (Select2 con AJAX).
         };
     }
 

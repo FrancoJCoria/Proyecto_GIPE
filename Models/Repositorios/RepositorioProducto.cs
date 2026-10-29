@@ -16,7 +16,7 @@ public class RepositorioProducto : RepositorioBase, IRepositorioProducto
     }
 
     //------------------------------------------------------------LISTADO PAGINADO (CON BUSQUEDA) --------------------------------------------------------
-    public ResultadoPaginado<Producto> ObtenerTodos(int pagina, int tamano, string? busqueda = null)
+    public ResultadoPaginado<Producto> ObtenerTodos(int pagina, int tamano, string? busqueda = null, bool soloActivos = false)
     {
         pagina = Math.Max(1, pagina);
         var resultado = new ResultadoPaginado<Producto>();
@@ -28,7 +28,8 @@ public class RepositorioProducto : RepositorioBase, IRepositorioProducto
 
             int offset = (pagina - 1) * tamano;
 
-            var where = @"WHERE @Busqueda = '' OR nombre LIKE CONCAT('%', @Busqueda, '%')";
+            var where = @"WHERE (@Busqueda = '' OR nombre LIKE CONCAT('%', @Busqueda, '%'))
+            AND (@SoloActivos = 0 OR estado = 1)";
 
             string consultaSql = $@"
             SELECT id, nombre, descripcion, costo_extra, margen_objetivo, precio_actual, stock_actual, url_producto, estado
@@ -39,7 +40,7 @@ public class RepositorioProducto : RepositorioBase, IRepositorioProducto
 
             using (var comando = new MySqlCommand(consultaSql, conexion))
             {
-                CargarParametrosListado(comando, busqueda, offset, tamano);
+                CargarParametrosListado(comando, busqueda, offset, tamano, soloActivos);
 
                 using var lector = comando.ExecuteReader();
 
@@ -51,7 +52,7 @@ public class RepositorioProducto : RepositorioBase, IRepositorioProducto
 
             using (var comando = new MySqlCommand($@"SELECT COUNT(*) FROM producto {where};", conexion))
             {
-                CargarParametrosListado(comando, busqueda, null, null);
+                CargarParametrosListado(comando, busqueda, null, null, soloActivos);
                 resultado.Total = Convert.ToInt32(comando.ExecuteScalar());
             }
         }
@@ -381,9 +382,10 @@ public class RepositorioProducto : RepositorioBase, IRepositorioProducto
     }
 
     //------------------------------------------------------------FUNCIONES --------------------------------------------------------
-    private static void CargarParametrosListado(MySqlCommand comando, string? busqueda, int? offset, int? tamano)
+    private static void CargarParametrosListado(MySqlCommand comando, string? busqueda, int? offset, int? tamano, bool soloActivos = false)
     {
         comando.Parameters.Add("@Busqueda", MySqlDbType.VarChar, 150).Value = busqueda?.Trim() ?? string.Empty;
+        comando.Parameters.Add("@SoloActivos", MySqlDbType.Int32).Value = soloActivos ? 1 : 0;
 
         if (offset is not null)
         {

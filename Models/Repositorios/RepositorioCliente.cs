@@ -16,7 +16,7 @@ public class RepositorioCliente : RepositorioBase, IRepositorioCliente
     }
 
     //------------------------------------------------------------LISTADO PAGINADO (CON BUSQUEDA) --------------------------------------------------------
-    public ResultadoPaginado<Cliente> ObtenerTodos(int pagina, int tamano, string? busqueda = null)
+    public ResultadoPaginado<Cliente> ObtenerTodos(int pagina, int tamano, string? busqueda = null, bool soloActivos = false)
     {
         pagina = Math.Max(1, pagina);
         var resultado = new ResultadoPaginado<Cliente>();
@@ -29,11 +29,12 @@ public class RepositorioCliente : RepositorioBase, IRepositorioCliente
             int offset = (pagina - 1) * tamano;
 
             var where = @"
-            WHERE @Busqueda = ''
+            WHERE (@Busqueda = ''
                OR nombre LIKE CONCAT('%', @Busqueda, '%')
                OR COALESCE(apellido, '') LIKE CONCAT('%', @Busqueda, '%')
                OR COALESCE(email, '') LIKE CONCAT('%', @Busqueda, '%')
-               OR COALESCE(telefono, '') LIKE CONCAT('%', @Busqueda, '%')";
+               OR COALESCE(telefono, '') LIKE CONCAT('%', @Busqueda, '%'))
+            AND (@SoloActivos = 0 OR estado = 1)";
 
             string consultaSql = $@"
             SELECT id, nombre, apellido, telefono, email, direccion, estado
@@ -44,7 +45,7 @@ public class RepositorioCliente : RepositorioBase, IRepositorioCliente
 
             using (var comando = new MySqlCommand(consultaSql, conexion))
             {
-                CargarParametrosListado(comando, busqueda, offset, tamano);
+                CargarParametrosListado(comando, busqueda, offset, tamano, soloActivos);
 
                 using var lector = comando.ExecuteReader();
 
@@ -56,7 +57,7 @@ public class RepositorioCliente : RepositorioBase, IRepositorioCliente
 
             using (var comando = new MySqlCommand($@"SELECT COUNT(*) FROM cliente {where};", conexion))
             {
-                CargarParametrosListado(comando, busqueda, null, null);
+                CargarParametrosListado(comando, busqueda, null, null, soloActivos);
                 resultado.Total = Convert.ToInt32(comando.ExecuteScalar());
             }
         }
@@ -269,9 +270,10 @@ public class RepositorioCliente : RepositorioBase, IRepositorioCliente
     }
 
     //------------------------------------------------------------FUNCIONES --------------------------------------------------------
-    private static void CargarParametrosListado(MySqlCommand comando, string? busqueda, int? offset, int? tamano)
+    private static void CargarParametrosListado(MySqlCommand comando, string? busqueda, int? offset, int? tamano, bool soloActivos = false)
     {
         comando.Parameters.Add("@Busqueda", MySqlDbType.VarChar, 150).Value = busqueda?.Trim() ?? string.Empty;
+        comando.Parameters.Add("@SoloActivos", MySqlDbType.Int32).Value = soloActivos ? 1 : 0;
 
         if (offset is not null)
         {

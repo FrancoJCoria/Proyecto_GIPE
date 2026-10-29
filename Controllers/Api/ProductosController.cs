@@ -19,11 +19,17 @@ public sealed class ProductosApiController : ControllerBase
 
     [HttpGet]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme + "," + CookieAuthenticationDefaults.AuthenticationScheme, Policy = "Empleado")]
-    public IActionResult ObtenerTodos([FromQuery] int pagina = 1, [FromQuery] string? busqueda = null)
+    public IActionResult ObtenerTodos(
+        [FromQuery] int pagina = 1,
+        [FromQuery] string? busqueda = null,
+        [FromQuery] int tamano = 20,
+        [FromQuery] bool soloActivos = false)
     {
         if (pagina < 1) return BadRequest(new { mensaje = "La página debe ser mayor a cero." });
-        var resultado = _productos.ObtenerTodos(pagina, TamanoMaximoPagina, busqueda);
-        return Ok(new { pagina, tamano = TamanoMaximoPagina, total = resultado.Total, productos = resultado.Filas });
+        // Tamano acotado: la busqueda asincrona de formularios pide paginas chicas.
+        tamano = Math.Clamp(tamano, 1, TamanoMaximoPagina);
+        var resultado = _productos.ObtenerTodos(pagina, tamano, busqueda, soloActivos);
+        return Ok(new { pagina, tamano, total = resultado.Total, productos = resultado.Filas });
     }
 
     [HttpGet("{id:int}")]

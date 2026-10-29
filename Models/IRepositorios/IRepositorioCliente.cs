@@ -6,8 +6,8 @@ namespace Proyecto_GIPE.Models.IRepositorios;
 
 public interface IRepositorioCliente
 {
-    /// <summary>Listado paginado con busqueda opcional por nombre, apellido, email o telefono.</summary>
-    ResultadoPaginado<Cliente> ObtenerTodos(int pagina, int tamano, string? busqueda = null);
+    /// <summary>Listado paginado con busqueda opcional por nombre, apellido, email o telefono. Con soloActivos filtra la columna estado.</summary>
+    ResultadoPaginado<Cliente> ObtenerTodos(int pagina, int tamano, string? busqueda = null, bool soloActivos = false);
 
     /// <summary>Clientes activos, ordenados por nombre (para el desplegable de ventas).</summary>
     IList<Cliente> ObtenerActivos();
