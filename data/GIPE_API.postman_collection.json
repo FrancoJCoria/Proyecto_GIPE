@@ -1,0 +1,599 @@
+{
+  "info": {
+    "_postman_id": "e2f4b1c0-3a1e-11ee-8c9e-00af12d9e1b5",
+    "name": "GIPE - Web API con JWT",
+    "description": "Coleccion de pruebas para la Web API REST del Proyecto_GIPE (ASP.NET Core + JWT).\n\nLa web MVC no consume la API de manera nativa (usa formularios + cookie), por lo que esta coleccion contiene TODAS las pruebas de los endpoints json.\n\n## Puesta en marcha\n1. Levantar la app (dotnet run). La API queda en {{base_url}} (default: http://localhost:5248).\n2. Ejecutar primero 'Auth/Login Dueno' (genera el JWT) y despues el resto en orden.\n3. Los scripts guardan automaticamente token, token_empleado, producto_id y venta_id como variables de la coleccion.\n4. Credenciales seed (solo desarrollo): dueno@gipe.com / Admin123! y empleado@gipe.com / Empleado123!.\n\n## Casos cubiertos\n- Login JWT para usuario Dueno y Empleado.\n- Acceso valido con Bearer token (perfil, productos, ventas).\n- ABM de productos paginado y buscado en el servidor.\n- Rechazo sin token (401) y con rol insuficiente (403).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:5248" },
+    { "key": "token", "value": "" },
+    { "key": "token_empleado", "value": "" },
+    { "key": "producto_id", "value": "1" },
+    { "key": "producto_venta_id", "value": "1" },
+    { "key": "venta_id", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "01 - Auth",
+      "item": [
+        {
+          "name": "Login Dueno (genera JWT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login exitoso (200)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var body = pm.response.json();",
+                  "pm.test('El token viene del auth handler', function () {",
+                  "    pm.expect(body.token).to.be.a('string').and.to.have.lengthOf.above(20);",
+                  "    pm.expect(body.tipo).to.eql('Bearer');",
+                  "});",
+                  "pm.test('El rol del usuario es Dueno', function () {",
+                  "    pm.expect(body.usuario.rol).to.eql(1);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('token', body.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"dueno@gipe.com\",\n  \"password\": \"Admin123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Usuario del seed (RolUsuario.Dueno = 1). El test guarda el JWT en la variable `token` de la coleccion."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": { "method": "POST", "url": { "raw": "{{base_url}}/api/auth/login" } },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"tipo\": \"Bearer\",\n  \"expira\": \"2026-01-01T12:00:00Z\",\n  \"usuario\": {\n    \"id\": 1, \"nombre\": \"Dueño GIPE\", \"email\": \"dueno@gipe.com\",\n    \"rol\": 1, \"estado\": true, \"url_avatar\": null\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Perfil (Bearer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Perfil con JWT (200)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var body = pm.response.json();",
+                  "pm.test('Devuelve email y rol', function () {",
+                  "    pm.expect(body.email).to.eql('dueno@gipe.com');",
+                  "    pm.expect(body.rol).to.eql(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/auth/perfil",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "perfil"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 - Productos (CRUD con JWT)",
+      "item": [
+        {
+          "name": "Listado paginado + busqueda",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Listado (200)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var body = pm.response.json();",
+                  "pm.test('Respuesta paginada del servidor', function () {",
+                  "    pm.expect(body.pagina).to.be.at.least(1);",
+                  "    pm.expect(body.tamano).to.eql(5);",
+                  "    pm.expect(body.total).to.be.at.least(body.productos.length);",
+                  "    pm.expect(body.productos.length).to.be.at.most(body.tamano);",
+                  "});",
+                  "",
+                  "if (body.productos.length > 0) {",
+                  "    pm.collectionVariables.set('producto_id', body.productos[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/productos?pagina=1&tamano=5&busqueda=a",
+              "host": ["{{base_url}}"],
+              "path": ["api", "productos"],
+              "query": [
+                { "key": "pagina", "value": "1" },
+                { "key": "tamano", "value": "5" },
+                { "key": "busqueda", "value": "a" }
+              ]
+            },
+            "description": "Paginado en el servidor: la peticion pide 1 pagina de hasta 5 filas por nombre y recibe SOLO esa pagina. Si hay un producto, el test guarda su id en `producto_id`."
+          },
+          "response": []
+        },
+        {
+          "name": "Crear producto (Dueno via JWT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Alta de producto (201)', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var body = pm.response.json();",
+                  "pm.test('El body trae el id generado', function () {",
+                  "    pm.expect(body.id).to.be.at.least(1);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('producto_id', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Producto Postman\",\n  \"descripcion\": \"Alta via Web API\",\n  \"costoExtra\": 100.5,\n  \"margenObjetivo\": 30,\n  \"precioActual\": 200.75,\n  \"stockActual\": 10\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "productos"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Detalle por id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Detalle (200)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/productos/{{producto_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "productos", "{{producto_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar producto (PUT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Actualizacion (204 sin contenido)', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Producto Postman editado\",\n  \"descripcion\": \"PUT via Web API\",\n  \"costoExtra\": 90,\n  \"margenObjetivo\": 35,\n  \"precioActual\": 250,\n  \"stockActual\": 10\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/productos/{{producto_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "productos", "{{producto_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Ajustar stock (PATCH)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Ajuste de stock (204)', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stock\": 42.5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/productos/{{producto_id}}/stock",
+              "host": ["{{base_url}}"],
+              "path": ["api", "productos", "{{producto_id}}", "stock"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Baja logica (DELETE)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Baja logica (204)', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/productos/{{producto_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "productos", "{{producto_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 - Ventas",
+      "item": [
+        {
+          "name": "Crear producto para la venta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Preparacion exitosa (201)', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var body = pm.response.json();",
+                  "pm.collectionVariables.set('producto_venta_id', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Producto venta Postman\",\n  \"costoExtra\": 50,\n  \"margenObjetivo\": 40,\n  \"precioActual\": 300,\n  \"stockActual\": 15\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "productos"]
+            },
+            "description": "Crea un producto nuevo con stock garantizado, para que la venta no dependa del estado del producto de la seccion 02."
+          },
+          "response": []
+        },
+        {
+          "name": "Crear venta (con items)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Alta de venta (201)', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var body = pm.response.json();",
+                  "pm.test('Detalle de la venta creada', function () {",
+                  "    pm.expect(body.venta).to.not.be.undefined;",
+                  "    pm.expect(body.items.length).to.be.at.least(1);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('venta_id', body.venta.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clienteId\": null,\n  \"items\": [\n    { \"productoId\": {{producto_venta_id}}, \"cantidad\": 1 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/ventas",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ventas"]
+            },
+            "description": "Venta mostrador sin cliente. Si el producto no tuviera stock suficiente (o estuviera dado de baja) la API devolveria 409 con el mensaje de negocio."
+          },
+          "response": []
+        },
+        {
+          "name": "Listado paginado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Listado de ventas (200)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var body = pm.response.json();",
+                  "pm.test('Respuesta paginada del servidor', function () {",
+                  "    pm.expect(body.pagina).to.be.at.least(1);",
+                  "    pm.expect(body.total).to.be.at.least(body.ventas.length);",
+                  "});",
+                  "",
+                  "if (body.ventas.length > 0) {",
+                  "    pm.collectionVariables.set('venta_id', body.ventas[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/ventas?pagina=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ventas"],
+              "query": [ { "key": "pagina", "value": "1" } ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Detalle de venta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Detalle de venta (200)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ] },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/ventas/{{venta_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ventas", "{{venta_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 - Seguridad (401 y 403)",
+      "item": [
+        {
+          "name": "Login Empleado (segundo JWT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login exitoso (200)', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "var body = pm.response.json();",
+                  "pm.test('El rol del usuario es Empleado', function () {",
+                  "    pm.expect(body.usuario.rol).to.eql(2);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('token_empleado', body.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"empleado@gipe.com\",\n  \"password\": \"Empleado123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "El test guarda el JWT en `token_empleado` (RolUsuario.Empleado = 2)."
+          },
+          "response": []
+        },
+        {
+          "name": "Crear producto con token Empleado (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Recurso restringido al Dueno pero con token de Empleado: 403', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{token_empleado}}", "type": "string" } ] },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Denegado\",\n  \"costoExtra\": 0,\n  \"margenObjetivo\": 10,\n  \"precioActual\": 100,\n  \"stockActual\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/productos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "productos"]
+            },
+            "description": "El alta de productos es exclusiva del rol Dueno. El token de Empleado es valido, pero el policy devuelve 403."
+          },
+          "response": []
+        },
+        {
+          "name": "Listado sin token (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Sin Bearer token no hay acceso: 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/productos?pagina=1&tamano=5",
+              "host": ["{{base_url}}"],
+              "path": ["api", "productos"],
+              "query": [
+                { "key": "pagina", "value": "1" },
+                { "key": "tamano", "value": "5" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Perfil con token invalido (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Token invalido rechazado: 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "token.falso.aqui", "type": "string" } ] },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/auth/perfil",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "perfil"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
