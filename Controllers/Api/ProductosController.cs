@@ -41,7 +41,7 @@ public sealed class ProductosApiController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Dueno")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme + "," + CookieAuthenticationDefaults.AuthenticationScheme, Policy = "Dueno")]
     public IActionResult Crear([FromBody] ProductoApiDto dto)
     {
         var producto = Mapear(dto);
@@ -52,7 +52,7 @@ public sealed class ProductosApiController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Dueno")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme + "," + CookieAuthenticationDefaults.AuthenticationScheme, Policy = "Dueno")]
     public IActionResult Actualizar(int id, [FromBody] ProductoApiDto dto)
     {
         var existente = _productos.ObtenerPorId(id);
@@ -64,7 +64,7 @@ public sealed class ProductosApiController : ControllerBase
     }
 
     [HttpPatch("{id:int}/stock")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Dueno")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme + "," + CookieAuthenticationDefaults.AuthenticationScheme, Policy = "Dueno")]
     public IActionResult ActualizarStock(int id, [FromBody] AjustarStockApiDto dto)
     {
         if (_productos.ObtenerPorId(id) is null) return NotFound(new { mensaje = "El producto no existe." });
@@ -72,7 +72,7 @@ public sealed class ProductosApiController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Dueno")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme + "," + CookieAuthenticationDefaults.AuthenticationScheme, Policy = "Dueno")]
     public IActionResult DarDeBaja(int id)
     {
         if (_productos.ObtenerPorId(id) is null) return NotFound(new { mensaje = "El producto no existe." });
