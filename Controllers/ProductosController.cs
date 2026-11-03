@@ -46,6 +46,9 @@ public class ProductosController : Controller
         return View(resultado);
     }
 
+    //------------------------------------------------------------ABM VUE (todo por AJAX contra api/productos) ----------------------
+    public IActionResult Spa() => View();
+
     //------------------------------------------------------------ALTA --------------------------------------------------------
     [Authorize(Policy = "Dueno")]
     public IActionResult Crear()
