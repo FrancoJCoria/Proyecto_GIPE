@@ -28,19 +28,21 @@ Los usuarios de prueba se crean solos al iniciar en modo Development (o con `SEE
 - **1:N:** `venta` → `venta_item`, `usuario` → `venta`, `cliente` → `venta`.
 - **N:M:** `producto` ↔ `insumo` mediante `producto_insumo` (la receta).
 
-Esquema completo en [data/script.sql](data/script.sql). DER: _pendiente, agregar en `/docs/der.png`_.
+Esquema completo en [data/script.sql](data/script.sql). DER: [docs/der.png](docs/der.png).
 
 ## Matriz de evidencias
 
+Las evidencias se guardan en [docs/evidencias/](docs/evidencias).
+
 | Requerimiento mínimo | Estado | Código | Evidencia |
 |---|---|---|---|
-| 1. 6+ tablas, 1:N y N:M | ✅ Cumplido | [script.sql](data/script.sql), [Models/Entities](Models/Entities) | DER pendiente |
-| 2. Login, roles y avatar | ✅ Cumplido | [AccountController.cs](Controllers/AccountController.cs), [UsuariosController.cs](Controllers/UsuariosController.cs) | Captura pendiente |
-| 3. Manejo de archivos (extra) | ✅ Cumplido | [ProductosController.cs](Controllers/ProductosController.cs) (portada del producto), [ServicioImagenes.cs](Models/Servicios/ServicioImagenes.cs) | Captura pendiente |
-| 4. ABM en Vue.js + AJAX | ✅ Cumplido | [productos-vue.js](wwwroot/js/productos-vue.js), [Spa.cshtml](Views/Productos/Spa.cshtml) (menú "Productos (Vue)") | GIF pendiente |
-| 5. Paginado por servidor | ✅ Cumplido | [AyudantePaginacion.cs](Models/Comunes/AyudantePaginacion.cs), [ResultadoPaginado.cs](Models/Comunes/ResultadoPaginado.cs) | Captura de red con `pagina=2` pendiente |
-| 6. Selección asíncrona (AJAX) | ✅ Cumplido | [ventas.js](wwwroot/js/ventas.js), [receta.js](wwwroot/js/receta.js) (Select2 contra la API) | GIF pendiente |
-| 7. Web API + JWT | ✅ Cumplido | [Controllers/Api](Controllers/Api), [colección Postman](data/GIPE_API.postman_collection.json) | Captura de Postman pendiente |
+| 1. 8 tablas, 1:N y N:M | ✅ Cumplido | [script.sql](data/script.sql) (tablas y FKs), [Models/Entities](Models/Entities) | [docs/der.png](docs/der.png) (DER) |
+| 2. Login, roles y avatar | ✅ Cumplido | [AccountController.cs#L46](Controllers/AccountController.cs#L46) (Login), [AccountController.cs#L178](Controllers/AccountController.cs#L178) (avatar), [Program.cs#L94](Program.cs#L94) (política rol Dueño) | `docs/evidencias/perfil-avatar.png` (captura del perfil con avatar) |
+| 3. Manejo de archivos (extra) | ✅ Cumplido | [ProductosController.cs#L62](Controllers/ProductosController.cs#L62) (alta con `IFormFile`), [ServicioImagenes.cs#L32](Models/Servicios/ServicioImagenes.cs#L32) (guardado) | `docs/evidencias/subida-producto.gif` (subida de imagen del producto) |
+| 4. ABM en Vue.js + AJAX | ✅ Cumplido | [productos-vue.js](wwwroot/js/productos-vue.js), [Spa.cshtml](Views/Productos/Spa.cshtml) (menú "Productos (Vue)") | `docs/evidencias/abm-vue.gif` (ABM dinámico) |
+| 5. Paginado por servidor | ✅ Cumplido | [AyudantePaginacion.cs](Models/Comunes/AyudantePaginacion.cs), [ResultadoPaginado.cs](Models/Comunes/ResultadoPaginado.cs), [Api/ProductosController.cs#L20](Controllers/Api/ProductosController.cs#L20) (`pagina` + `tamano`) | `docs/evidencias/red-pagina2.png` (inspector de red con `pagina=2`) |
+| 6. Selección asíncrona (AJAX) | ✅ Cumplido | [ventas.js#L22](wwwroot/js/ventas.js#L22) (productos) y [ventas.js#L63](wwwroot/js/ventas.js#L63) (clientes), [receta.js#L13](wwwroot/js/receta.js#L13) (insumos), endpoints [Api/ProductosController.cs#L20](Controllers/Api/ProductosController.cs#L20), [Api/ClientesController.cs#L20](Controllers/Api/ClientesController.cs#L20), [Api/InsumosController.cs#L20](Controllers/Api/InsumosController.cs#L20) | `docs/evidencias/select-busqueda.gif` (desplegable buscando) |
+| 7. Web API + JWT | ✅ Cumplido | [Api/AuthController.cs#L31](Controllers/Api/AuthController.cs#L31) (login → token), [Api/AuthController.cs#L76](Controllers/Api/AuthController.cs#L76) (perfil con Bearer), [Program.cs#L75](Program.cs#L75) (config JWT), [colección Postman](data/GIPE_API.postman_collection.json) | `docs/evidencias/postman-jwt.png` (Postman con Bearer Token) |
 
 Funcionalidad restringida por rol: ABM de usuarios, insumos, gastos y ganancias solo para el Dueño; el Empleado solo lee productos.
 
