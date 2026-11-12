@@ -11,6 +11,6 @@ public interface IRepositorioUsuario
     int CrearUsuario(Usuario usuario);
     bool ActualizarUsuario(Usuario usuario);
     bool CambiarEstadoUsuario(int id, bool nuevoEstado);
-    string? EditarAvatarUsuario(int id, string url);
+    bool EditarAvatarUsuario(int id, string? url);
     
 }

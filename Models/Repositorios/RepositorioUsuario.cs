@@ -200,7 +200,7 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
 
 //------------------------------------------------------------ ACTUALIZAR EL AVATAR DE USUARIO --------------------------------------------------------
 
-    public string? EditarAvatarUsuario(int id, string url)
+    public bool EditarAvatarUsuario(int id, string? url)
     {
         try
         {
@@ -212,23 +212,16 @@ public class RepositorioUsuario : RepositorioBase, IRepositorioUsuario
             AND id = @Id;";
 
             using var comando = new MySqlCommand(consulta, conexion);
-            comando.Parameters.Add("@url_avatar", MySqlDbType.VarChar,500).Value = url;
+            comando.Parameters.Add("@url_avatar", MySqlDbType.VarChar,500).Value = url ?? (object)DBNull.Value;
             comando.Parameters.Add("@Id", MySqlDbType.Int32).Value = id;
             conexion.Open();
 
-            int filasAfectadas = comando.ExecuteNonQuery();
-
-            if (filasAfectadas > 0)
-            {
-                return url;
-            }
-
-            return null;
+            return comando.ExecuteNonQuery() > 0;
 
         }catch(Exception e)
         {
             _logger.LogError(e, "Error al modificar el avatar del usuario {Id}", id);
-            return null;
+            return false;
         }
     }
 //--------------------------------------------------------------------FUNCIONES --------------------------------------------------------

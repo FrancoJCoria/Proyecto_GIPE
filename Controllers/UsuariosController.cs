@@ -273,7 +273,7 @@ public class UsuariosController : Controller
         {
             var urlNueva = _servicioImagenes.Guardar(archivo, "Avatares", urlAnterior);
 
-            if (urlNueva is not null && _repositorioUsuario.EditarAvatarUsuario(id, urlNueva) is not null)
+            if (urlNueva is not null && _repositorioUsuario.EditarAvatarUsuario(id, urlNueva))
             {
                 TempData["Mensaje"] = "Foto de perfil guardada.";
             }

@@ -209,7 +209,7 @@ public class AccountController : Controller
             return RedirectToAction(nameof(Perfil));
         }
 
-        if (urlNueva is null || _repositorioUsuario.EditarAvatarUsuario(usuario.Id, urlNueva) is null)
+        if (urlNueva is null || !_repositorioUsuario.EditarAvatarUsuario(usuario.Id, urlNueva))
         {
             TempData["Error"] = "No se pudo guardar la foto de perfil.";
             return RedirectToAction(nameof(Perfil));
@@ -242,13 +242,14 @@ public class AccountController : Controller
             return RedirectToAction(nameof(Login));
         }
 
-        _servicioImagenes.BorrarSiLocal("Avatares", usuario.Url_avatar);
-
-        if (_repositorioUsuario.EditarAvatarUsuario(usuario.Id, null!) is null)
+        if (!_repositorioUsuario.EditarAvatarUsuario(usuario.Id, null))
         {
             TempData["Error"] = "No se pudo quitar la foto de perfil.";
             return RedirectToAction(nameof(Perfil));
         }
+
+        // Solo borro el archivo fisico si la actualizacion en la DB tuvo exito.
+        _servicioImagenes.BorrarSiLocal("Avatares", usuario.Url_avatar);
 
         usuario.Url_avatar = null;
         await IniciarSesion(usuario);
